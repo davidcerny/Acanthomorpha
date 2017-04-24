@@ -1,0 +1,813 @@
+---
+title: "SortaDate Analysis"
+author: "David Cerny"
+date: "3/16/2017"
+output: html_document
+---
+
+# Individual UCEs
+
+The input for a SortaDate analysis should consist of a directory of gene alignments and corresponding gene trees. Therefore, it was first necessary to construct the individual gene trees. However, since the alignments do not all contain the same set of taxa, the taxa that are not present in all of the alignments had to be removed. These taxa were identified using an error message thrown by the `get_var_length`, after it was run for the first time in the manner described below on the original set of unpruned alignments: 
+
+- apogon_lateralis
+- apogon_maculatus
+- bathygobius_soporator
+- erotelis_smaragdus
+- evorthodus_minutus
+- gillichthys_seta
+- mogurnda_adspersa
+- odontobutis_obscura
+- ophiocara_porocephala
+- ostorhinchus_nigrofasciatus
+- periophthalmus_barbarus
+- rondeletia_loricata
+- valenciennea_strigata
+
+The taxon removal was performed using the Python3 package AMAS:
+
+```
+python3 AMAS.py remove --taxa-to-remove apogon_lateralis apogon_maculatus bathygobius_soporator erotelis_smaragdus evorthodus_minutus gillichthys_seta mogurnda_adspersa odontobutis_obscura ophiocara_porocephala ostorhinchus_nigrofasciatus periophthalmus_barbarus rondeletia_loricata valenciennea_strigata --data-type dna -f fasta --in-files *fasta --out-format fasta -g pruned -c 4
+```
+
+The gene trees were then constructed using ETE toolkit:
+
+Preparatory step: installing Miniconda, following the instructions from <http://etetoolkit.org/download/>
+
+```
+curl -L 'http://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh' -o Miniconda2-latest-MacOSX-x86_64.sh
+
+# Note that the original link does not work
+
+bash Miniconda2-latest-MacOSX-x86_64.sh -b -p ~/anaconda_ete/
+
+# Output:
+#
+# PREFIX=/Users/David/anaconda_ete
+# installing: python-2.7.13-0 ...
+# installing: cffi-1.9.1-py27_0 ...
+# installing: conda-env-2.6.0-0 ...
+# installing: cryptography-1.7.1-py27_0 ...
+# installing: enum34-1.1.6-py27_0 ...
+# installing: idna-2.2-py27_0 ...
+# installing: ipaddress-1.0.18-py27_0 ...
+# installing: openssl-1.0.2k-0 ...
+# installing: pyasn1-0.1.9-py27_0 ...
+# installing: pycosat-0.6.1-py27_1 ...
+# installing: pycparser-2.17-py27_0 ...
+# installing: pyopenssl-16.2.0-py27_0 ...
+# installing: readline-6.2-2 ...
+# installing: requests-2.12.4-py27_0 ...
+# installing: ruamel_yaml-0.11.14-py27_1 ...
+# installing: setuptools-27.2.0-py27_0 ...
+# installing: six-1.10.0-py27_0 ...
+# installing: sqlite-3.13.0-0 ...
+# installing: tk-8.5.18-0 ...
+# installing: yaml-0.1.6-0 ...
+# installing: zlib-1.2.8-3 ...
+# installing: conda-4.3.11-py27_0 ...
+# installing: pip-9.0.1-py27_1 ...
+# installing: wheel-0.29.0-py27_0 ...
+# Python 2.7.13 :: Continuum Analytics, Inc.
+# creating default environment...
+# installation finished.
+
+export PATH=~/anaconda_ete/bin:$PATH
+conda install -c etetoolkit ete3 ete3_external_apps
+ete3 build check
+```
+
+The gene trees were estimated using RAxML:
+
+```
+ete3 build -w standard_raxml -n /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA/uce-3.fasta -o /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA/uce-3-tree
+```
+
+Sample output:
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("ETE3-RAxML-output.txt"), sep = '\n')
+```
+
+Automatically generate the corresponding command for each of the 230 alignment files in the directory:
+
+```
+cd /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA
+ls
+```
+
+Copy the output to a text file:
+
+```{r, eval=FALSE}
+# Get the 1st part of the command
+
+locus_table <- read.table("Set1-individual-loci.txt")
+n <- length(unlist(locus_table))
+
+inputfile <- vector()
+for(i in locus_table) {
+  inputfile <- append(inputfile, paste("ete3 build -w standard_raxml -n /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA/", i, sep = ""))
+}
+
+# Length check
+
+length(inputfile) - n
+
+# Remove file endings from the locus names
+
+names_and_endings <- as.character(as.vector(as.matrix(locus_table)))
+locus_names <- vector()
+for(i in names_and_endings) {
+  locus_names <- append(locus_names, sapply(strsplit(i, split='.', fixed=TRUE), function(x) (x[1])))
+}
+
+# Get the 2nd part of the command
+
+outputfile <- vector()
+for(i in locus_names) {
+  outputfile <- append(outputfile, paste(" -o /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/", i, sep=""))
+}
+
+# Length check
+
+length(outputfile) - n
+
+# Get the entire command
+
+commands <- paste(inputfile, outputfile, "-tree &&", sep="")
+
+# Length check
+
+length(commands) - n
+
+# Uncomment to print to file:
+# write(commands, "gene-tree-analysis.sh")
+```
+
+`#!/bin/bash` was then inserted into the first line of the file to convert it into a shell script. The script was run as follows:
+
+```
+chmod 755 /Users/David/Grive/Alfaro_Lab/SortaDate/gene-tree-analysis.sh
+/Users/David/Grive/Alfaro_Lab/SortaDate/gene-tree-analysis.sh
+```
+
+Write a new script that will copy the trees from the nested subdirectories to the same directory where the alignment files are located:
+
+```{r, eval = FALSE}
+# 1st part of the command
+
+copyfiles <- vector()
+for(i in locus_names) {
+  copyfiles <- append(copyfiles, paste("cp /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/", i, sep = ""))
+}
+
+# 2nd part of the command
+
+subdirectories <- vector()
+for(i in locus_names) {
+  subdirectories <- append(subdirectories, paste("-tree/clustalo_default-none-none-raxml_default/", i, sep = ""))
+}
+
+# Get the entire command
+
+copying <- paste(copyfiles, subdirectories, ".fasta.final_tree.nw /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA/ &&", sep="")
+
+# Uncomment to print to file:
+# write(copying, "copy-trees.sh")
+```
+
+Write a third script to rename the tree files so that they have the `.tre` file ending, which SortaDate looks for while searching its target directory:
+
+```{r, eval = FALSE}
+# 1st part of the command
+
+oldname <- vector()
+for(i in locus_names) {
+  oldname <- append(oldname, paste("mv /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA/", i, sep = ""))
+}
+
+# 2nd part of the command
+
+newname <- vector()
+for(i in locus_names) {
+  newname <- append(newname, paste(".fasta.final_tree.nw /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA/", i, sep = ""))
+}
+
+# Get the entire command:
+
+renametrees <- paste(oldname, newname, ".tre &&", sep = "")
+
+# Uncomment to print to file:
+write(renametrees, "rename-trees.sh")
+```
+
+### Phase 1: get_var_length
+
+```
+python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA/ --flend .tre --outf var-uces --outg alepisaurus_ferox,ceratoscopelus_warmingii
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("var-uces"), sep = '\n')
+```
+
+### Phase 2: get_bp_genetrees
+
+```
+python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf bp-uces
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("bp-uces"), sep = '\n')
+```
+
+### Phase 3: combine_results
+
+```
+python src/combine_results.py var-uces bp-uces --outf comb-uces
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("comb-uces"), sep = '\n')
+```
+
+### Phase 4: get_good_genes
+
+In order of descending priority: bipartition support, root-to-tip variance, tree length
+
+```
+python src/get_good_genes.py comb-uces --max 3 --order 3,1,2 --outf gg-uces-312
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-uces-312"), sep = '\n')
+```
+
+In order of descending priority: bipartition support, tree length, root-to-tip variance
+
+```
+python src/get_good_genes.py comb-uces --max 3 --order 3,2,1 --outf gg-uces-321
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-uces-321"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```
+python src/get_good_genes.py comb-uces --max 3 --order 2,1,3 --outf gg-uces-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-uces-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```
+python src/get_good_genes.py comb-uces --max 3 --order 2,3,1 --outf gg-uces-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-uces-231"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, tree length, bipartition support
+
+```
+python src/get_good_genes.py comb-uces --max 3 --order 1,2,3 --outf gg-uces-123
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-uces-123"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, bipartition support, tree length
+
+```
+python src/get_good_genes.py comb-uces --max 3 --order 1,3,2 --outf gg-uces-132
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-uces-132"), sep = '\n')
+```
+
+# k-means partitions
+
+Note that the largest, slowest-evolving partition ("ccf55a6ee6d62f840a124bcc0c98ecf5"; 132 kb) was excluded from the first round of analyses for computational reasons. Attempts to analyze it in RAxML after the remaining 31 analyses finished up were unsuccessful.
+
+```{r, eval=FALSE}
+# Get the 1st part of the command
+
+kmeans_table <- read.table("Set2-kmeans-partitions.txt")
+n2 <- length(unlist(kmeans_table))
+
+first <- vector()
+for(i in kmeans_table) {
+  first <- append(first, paste("ete3 build -w standard_raxml -n /Users/David/Grive/Alfaro_Lab/Acanthomorpha/k-means_partitions/", i, sep = ""))
+}
+
+# Length check
+
+length(first) - n2
+
+# Remove file endings from the locus names
+
+no_endings <- as.character(as.vector(as.matrix(kmeans_table)))
+kmeans_names <- vector()
+for(i in no_endings) {
+  kmeans_names <- append(kmeans_names, sapply(strsplit(i, split='.', fixed=TRUE), function(x) (x[1])))
+}
+kmeans_names
+
+# Get the 2nd part of the command
+
+second <- vector()
+for(i in kmeans_names) {
+  second <- append(second, paste(" -o /Users/David/Grive/Alfaro_Lab/Acanthomorpha/k-means_partitions/", i, sep=""))
+}
+second
+
+# Length check
+
+length(second) - n2
+
+# Get the entire command
+
+kmeansscript <- paste(first, second, "-tree &&", sep="")
+
+# Length check
+
+length(kmeansscript) - n2
+
+# Uncomment to print to file:
+# write(kmeansscript, "kmeans-analysis.sh")
+```
+
+Copy the trees into the directory containing the alignments:
+
+```{r, eval = FALSE}
+# 1st part of the command
+
+copytrees <- vector()
+for(i in kmeans_names) {
+  copytrees <- append(copytrees, paste("cp /Users/David/Grive/Alfaro_Lab/Acanthomorpha/k-means_partitions/", i, sep = ""))
+}
+
+# 2nd part of the command
+
+locations <- vector()
+for(i in kmeans_names) {
+  locations <- append(locations, paste("-tree/clustalo_default-none-none-raxml_default/", i, sep = ""))
+}
+
+# Get the entire command
+
+finalstep <- paste(copytrees, locations, ".phy.fasta.final_tree.nw /Users/David/Grive/Alfaro_Lab/Acanthomorpha/k-means_partitions/FASTA/ &&", sep="")
+
+# Uncomment to print to file:
+# write(finalstep, "copy-kmeans-trees.sh")
+```
+
+Change the tree names so that they correspond to the partition names:
+
+```{r, eval = FALSE}
+# 1st part of the command
+
+oldtreename <- vector()
+for(i in kmeans_names) {
+  oldtreename <- append(oldtreename, paste("mv /Users/David/Grive/Alfaro_Lab/Acanthomorpha/k-means_partitions/FASTA/", i, sep = ""))
+}
+
+# 2nd part of the command
+
+newtreename <- vector()
+for(i in kmeans_names) {
+  newtreename <- append(newtreename, paste(".phy.fasta.final_tree.nw /Users/David/Grive/Alfaro_Lab/Acanthomorpha/k-means_partitions/FASTA/", i, sep = ""))
+}
+
+# Get the entire command:
+
+changetreenames <- paste(oldtreename, newtreename, ".tre &&", sep = "")
+
+# Uncomment to print to file:
+# write(changetreenames, "rename-kmeans-trees.sh")
+```
+
+Finally, rename the partitions:
+
+```{r, eval = FALSE}
+# 1st part of the command
+
+oldpartition <- vector()
+for(i in kmeans_names) {
+  oldpartition <- append(oldpartition, paste("mv /Users/David/Grive/Alfaro_Lab/Acanthomorpha/k-means_partitions/FASTA/", i, sep = ""))
+}
+
+# 2nd part of the command
+
+newpartition <- vector()
+for(i in kmeans_names) {
+  newpartition <- append(newpartition, paste(".phy.fasta /Users/David/Grive/Alfaro_Lab/Acanthomorpha/k-means_partitions/FASTA/", i, sep = ""))
+}
+
+# Get the entire command
+  
+renamepartitions <- paste(oldpartition, newpartition, ".fasta &&", sep = "")
+
+# Uncomment to print to file:
+# write(renamepartitions, "rename-partitions.sh")
+```
+
+### Phase 1: get_var_length
+
+```
+python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/k-means_partitions/FASTA/ --flend .tre --outf var-kmeans --outg alepisaurus_ferox,ceratoscopelus_warmingii
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("var-kmeans"), sep = '\n')
+```
+
+### Phase 2: get_bp_genetrees
+
+```
+python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/k-means_partitions/FASTA/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf bp-kmeans
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("bp-kmeans"), sep = '\n')
+```
+
+### Phase 3: combine_results
+
+```
+python src/combine_results.py var-kmeans bp-kmeans --outf comb-kmeans
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("comb-kmeans"), sep = '\n')
+```
+
+### Phase 4: get_good_genes
+
+In order of descending priority: bipartition support, root-to-tip variance, tree length
+
+```
+python src/get_good_genes.py comb-kmeans --max 3 --order 3,1,2 --outf gg-kmeans-312
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-kmeans-312"), sep = '\n')
+```
+
+In order of descending priority: bipartition support, tree length, root-to-tip variance
+
+```
+python src/get_good_genes.py comb-kmeans --max 3 --order 3,2,1 --outf gg-kmeans-321
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-kmeans-321"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```
+python src/get_good_genes.py comb-kmeans --max 3 --order 2,1,3 --outf gg-kmeans-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-kmeans-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```
+python src/get_good_genes.py comb-kmeans --max 3 --order 2,3,1 --outf gg-kmeans-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-kmeans-231"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, tree length, bipartition support 
+
+```
+python src/get_good_genes.py comb-kmeans --max 3 --order 1,2,3 --outf gg-kmeans-123
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-kmeans-123"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, bipartition support, tree length
+
+```
+python src/get_good_genes.py comb-kmeans --max 3 --order 1,3,2 --outf gg-kmeans-132
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-kmeans-132"), sep = '\n')
+```
+
+# 50-bp Chunks
+
+A bash script was written to automate the following actions:
+
+1. Create a new directory nested in `/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA` for each locus
+2. Split the alignments for each locus into individual sequences, and these into 50-bp chunks. This step was performed using a custom Python script obtained from http://www.reddit.com/r/bioinformatics/comments/1u8yc7/looking_for_a_script_that_will_split_dna/ceg8rav/?st=j0tbjfco&sh=1e300055. 
+
+    ```
+      '''
+      Splits all sequences within a multi-fasta file into chunks of a specified size.
+      
+      Fasta header information is retained with each split sequence - its position in
+      the original is appended to the id. Single-line and multi-line fasta files are
+      supported. Prints to stout, so pipe to a file to store the result.
+      
+      Usage:
+      python splitter.py <filename> <chunksize>
+      python splitter.py myfile.fa 100
+      '''
+      
+      from __future__ import print_function
+      from sys import argv, version
+      
+      if version[0] == '2':
+          from itertools import izip_longest as zl
+      else:
+          from itertools import zip_longest as zl
+          
+      chunksize = int(argv[2])
+      
+      def writeseq(header, seq):
+          for i, chunk in enumerate(zl(*[iter(seq)]*chunksize, fillvalue='')):
+              print(header + '_{}bp'.format(i*chunksize))
+              print(''.join(chunk))
+              
+      with open(argv[1]) as f:
+          header, seq = f.readline().rstrip(), ''
+          for l in f:
+              if l[0] != '>':
+                  seq += l.rstrip()
+              else:
+                  writeseq(header, seq)
+                  header, seq = l.rstrip(), ''
+          writeseq(header, seq)
+    ```
+
+3. For each locus, join the individual sequences chunk-wise (i.e., make a single fasta file for all taxa and sites 0 to 50, another one for all taxa and sites 51 to 100, etc.):
+
+    ```{r, eval = FALSE}
+    library(dplyr)
+
+    # Alternating rows (name, sequence, name, sequence) go to two different columns, so that
+    # each sequence is correctly assigned to its respective taxon:
+
+    split_seqs <- read.table("split.txt")
+    odd <- as.vector(split_seqs[seq(1, nrow(split_seqs), 2), ])
+    even <- as.vector(split_seqs[seq(2, nrow(split_seqs), 2), ])
+    odd_name <- "taxon"
+    even_name <- "sequence"
+    split_seqs_new <- data.frame(odd, even)
+    names(split_seqs_new) <- c(odd_name, even_name)
+
+    # Determine how long the locus is (i.e., how many 50-bp chunks it has been split into).
+    # This can be done by counting the number of occurrences of a single taxon name. 
+    # In principle, any name could be used, but since not all of the UCEs include
+    # all of the taxa, it is advisable to choose a taxon common to all the loci.
+
+    n <- length(unique(grep("chaetodon_kleinii", split_seqs_new[,1], value = TRUE)))
+
+    # Create a vector of strings that can filter taxon names according to the base pair range
+    # tag attached to their end
+
+    chunks <- vector()
+    for(i in 0:(n-1)) {
+      chunks <- append(chunks, paste("_", i*50, "bp", sep = ""))
+    }
+
+    # Create a list of data frames. Each element of the list represents a base pair range
+    # and consists of a data frame containing both the "taxon" and "sequence" columns of
+    # split_seqs_new
+
+    partition <- list()
+    for(i in 1:length(chunks)) {
+      partition[[i]] <- data.frame(filter(split_seqs_new, 
+                                          grepl(as.character(chunks[i]), taxon)))
+    }
+
+    # Create a matrix whose columns represents individual chunks (i.e., base pair ranges)
+    # and whose rows have the structure of the original split_seqs data frame -- i.e., name,
+    # sequence, name, sequence:
+
+    chunkmatrix <- matrix(ncol = length(partition), 
+                          nrow = 2*(nrow(split_seqs_new)/length(partition)))
+    for(i in 1:length(partition)) {
+      for(j in 1:nrow(partition[[i]])) {
+        chunkmatrix[(2*j - 1), i] <- as.character(partition[[i]][j, "taxon"])
+        chunkmatrix[2*j, i] <- as.character(partition[[i]][j, "sequence"])
+      }
+    }
+
+    # Print the resulting fasta files!
+
+    for(i in 1:ncol(chunkmatrix)) {
+      write(chunkmatrix[,i], paste("chunk_", i, ".fasta", sep = ""))
+    }
+    ```
+
+4. Add a locus-indicating prefix to all the chunks of a given UCE:
+    
+    ```
+    find *.fasta -maxdepth 0 ! -path . -exec mv {} uce-1005_{} \;
+    ```
+    
+5. Copy the resulting fasta files into a single directory.
+
+The contents of the directory were then summarized as follows:
+
+```
+cd /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/
+ls > /Users/David/Grive/Alfaro_Lab/SortaDate/Set3-50bp-chunks.txt
+```
+
+Now, change the taxon names in the chunk FASTA files so that they correspond to the names in the reference tree. First, create a file with the names of all the chunk files:
+
+```
+cd /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/
+ls *.fasta > /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/chunklist.txt
+```
+
+```{r, eval=FALSE}
+a <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/chunklist.txt")
+
+x <- vector()
+for(i in 1:nrow(a)) {
+  x <- append(x, paste("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/", a[i,], sep = ""))
+}
+
+for(i in 1:length(x)) {
+  c <- read.table(print(x[i]), stringsAsFactors = FALSE)
+  d <- vector()
+  for(j in 1:(nrow(c)/2)) {
+    d[j] <- as.character(c[(2*j-1),])
+  }
+  
+  e <- vector()
+  for(j in 1:length(d)) {
+    e[j] <- paste(sapply(strsplit(d[j], split="_", fixed=TRUE), function(x) (x[1])), 
+                  "_", 
+                  sapply(strsplit(d[j], split="_", fixed=TRUE), function(x) (x[2])),
+                  sep = "")
+  }
+  
+  for(j in 1:(nrow(c)/2)) {
+    c[(2*j-1),] <- e[j]
+  }
+  write(as.matrix(c), print(x[i]), ncolumns=1)
+}
+```
+
+A script was generated to analyze all of the alignment in the directory using RAxML:
+
+```{r, eval=FALSE}
+chunk_table <- read.table("Set3-50bp-chunks.txt")
+
+newfolders <- vector()
+for(i in chunk_table) {
+  newfolders <- append(newfolders, paste("ete3 build -w standard_raxml -n /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/", i, sep=""))
+}
+
+with_endings <- as.character(as.vector(as.matrix(chunk_table)))
+chunk_names <- vector()
+for(i in with_endings) {
+  chunk_names <- append(chunk_names, sapply(strsplit(i, split='.', fixed=TRUE), function(x) (x[1])))
+}
+
+tree_location <- vector()
+for(i in chunk_names) {
+  tree_location <- append(tree_location, paste(" -o /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/", i, sep=""))
+}
+
+analyzechunks <- paste(newfolders, tree_location, sep="")
+write(analyzechunks, "chunk-analysis.sh")
+```
+
+The resulting tree files were then copied into the directory containing the alignments:
+
+```{r, eval = FALSE}
+copyfrom1 <- vector()
+for(i in chunk_names) {
+  copyfrom1 <- append(copyfrom1, paste("cp /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/", i, sep = ""))
+}
+
+copyfrom2 <- vector()
+for(i in chunk_names) {
+  copyfrom2 <- append(copyfrom2, paste("/clustalo_default-none-none-raxml_default/", i, sep = ""))
+}
+
+copyto <- paste(copyfrom1, copyfrom2, ".fasta.final_tree.nw /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/", sep="")
+
+write(copyto, "copy-chunk-trees.sh")
+```
+
+Rename the trees:
+
+```
+brew install rename
+rename -S .fasta.final_tree.nw .tre *.fasta.final_tree.nw
+```
+
+### Phase 1: get_var_length
+
+```
+python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/ --flend .tre --outf var-chunks --outg alepisaurus_ferox,ceratoscopelus_warmingii
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("var-chunks"), sep = '\n')
+```
+
+### Phase 2: get_bp_genetrees
+
+```
+python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf bp-chunks
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("bp-chunks"), sep = '\n')
+```
+
+### Phase 3: combine_results
+
+```
+python src/combine_results.py var-chunks bp-chunks --outf comb-chunks
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("comb-chunks"), sep = '\n')
+```
+
+### Phase 4: get_good_genes
+
+In order of descending priority: bipartition support, root-to-tip variance, tree length
+
+```
+python src/get_good_genes.py comb-chunks --max 3 --order 3,1,2 --outf gg-chunks-312
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks-312"), sep = '\n')
+```
+
+In order of descending priority: bipartition support, tree length, root-to-tip variance
+
+```
+python src/get_good_genes.py comb-chunks --max 3 --order 3,2,1 --outf gg-chunks-321
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks-321"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```
+python src/get_good_genes.py comb-chunks --max 3 --order 2,1,3 --outf gg-chunks-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```
+python src/get_good_genes.py comb-chunks --max 3 --order 2,3,1 --outf gg-chunks-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks-231"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, tree length, bipartition support 
+
+```
+python src/get_good_genes.py comb-chunks --max 3 --order 1,2,3 --outf gg-chunks-123
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks-123"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, bipartition support, tree length
+
+```
+python src/get_good_genes.py comb-chunks --max 3 --order 1,3,2 --outf gg-chunks-132
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks-132"), sep = '\n')
+```
