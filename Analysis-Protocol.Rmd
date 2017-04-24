@@ -2250,3 +2250,22 @@ beast -threads 12 -beagle_SSE rcluster2rlc.xml
 ```
 beast -threads 12 -beagle_SSE rcluster3rlc.xml
 ```
+
+## PAML / mcmcTREE
+
+In order to make the analysis more directly comparable to the results obtained using BEAST (see below), a root calibration of 120.5 Ma (rather than 113.02 Ma) was used in baseml to estimate the mean susbtitution rate. The time unit was set to one hundred million years (i.e., the calibration was denoted as "1.205"). All other settings were identical to those employed in the baseml analyses reported above.
+
+## BEAST 
+
+The root was assigned an exponential prior whose mean was equal to the mean of the uniform prior used in PhyloBayes and in mcmcTREE, and which was truncated at 143 Ma to prevent BEAST from inferring excessively old dates for the root:
+
+```{r}
+root <- (143 - 98)/2
+paste("Root", root, sep = " = ")
+```
+
+The prior placed on the (*Polymixia* + *Aphredoderus*) node (calibrated by *Homonotichthys*) was constructed using the corrected maximum of 116.35 Ma. The analysis was run under the lognormal relaxed clock model and the fixed-topology operator mix, in which the operators acting on the `ucld.mean` and `ucld.stdev` parameters received tuning values of 0.9 and weights of 6.0. MCMC was run for 200 million generations, with a sampling frequency of 1 sample per 1000 generations.
+
+```
+beast -threads 12 -beagle_SSE bestpartition-run1.xml
+```
