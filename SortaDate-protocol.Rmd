@@ -811,3 +811,255 @@ python src/get_good_genes.py comb-chunks --max 3 --order 1,3,2 --outf gg-chunks-
 ```{r comment='', echo = FALSE, message=F, warning=F}
 cat(readLines("gg-chunks-132"), sep = '\n')
 ```
+
+## 50-bp chunks: SH-like of 75% or above
+
+1. Copy all the tree files to a new directory:
+
+    ```
+    cd /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa
+    mkdir Chunks_75
+    cp Chunks/*.tre Chunks_75
+    ```
+
+2. Collapse all the nodes with SH-like support values of less than 75% using the following Python script:
+
+    ```
+    import os, uuid
+    from ete3 import Tree
+
+    for file in os.listdir("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks"):
+        if file.endswith(".tre"):
+            outname = "/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_75/" + str(file)
+            t = Tree(file, format=0)
+
+            print t.get_ascii(attributes=['support', 'name'])
+
+            for node in t.get_descendants():
+                if not node.is_leaf() and node.support <= 0.9:
+                    node.delete()
+
+            print t.get_ascii(attributes=['support', 'name'])
+
+            t.write(format=0, outfile=outname)
+    ```
+
+3. Copy the fasta alignments to the same directory:
+
+    ```
+    cp Chunks/*.fasta Chunks_75
+    ```
+    
+### Phase 1: get_var_length
+
+```
+python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_75/ --flend .tre --outf var-chunks75 --outg alepisaurus_ferox,ceratoscopelus_warmingii
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("var-chunks75"), sep = '\n')
+```
+
+### Phase 2: get_bp_genetrees
+
+```
+python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_75/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf bp-chunks75
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("bp-chunks75"), sep = '\n')
+```
+
+### Phase 3: combine_results
+
+```
+python src/combine_results.py var-chunks75 bp-chunks75 --outf comb-chunks75
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("comb-chunks75"), sep = '\n')
+```
+
+Write a script to delete the lines containing NAs:
+
+```{r, eval = FALSE}
+combchunks75 <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/comb-chunks75", fill = TRUE)
+filtered <- na.omit(combchunks75)
+write.table(filtered,
+      "/Users/David/Grive/Alfaro_Lab/SortaDate/comb-chunks75-filtered",
+      sep = "\t",
+      quote = FALSE,
+      row.names = FALSE,
+      col.names = FALSE)
+```
+
+### Phase 4: get_good_genes
+
+In order of descending priority: bipartition support, root-to-tip variance, tree length
+
+```
+python src/get_good_genes.py comb-chunks75-filtered --max 3 --order 3,1,2 --outf gg-chunks75-312
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks75-312"), sep = '\n')
+```
+
+In order of descending priority: bipartition support, tree length, root-to-tip variance
+
+```
+python src/get_good_genes.py comb-chunks75-filtered --max 3 --order 3,2,1 --outf gg-chunks75-321
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks75-321"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```
+python src/get_good_genes.py comb-chunks75-filtered --max 3 --order 2,1,3 --outf gg-chunks75-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks75-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```
+python src/get_good_genes.py comb-chunks75-filtered --max 3 --order 2,3,1 --outf gg-chunks75-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks75-231"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, tree length, bipartition support 
+
+```
+python src/get_good_genes.py comb-chunks75-filtered --max 3 --order 1,2,3 --outf gg-chunks75-123
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks75-123"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, bipartition support, tree length
+
+```
+python src/get_good_genes.py comb-chunks75-filtered --max 3 --order 1,3,2 --outf gg-chunks75-132
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks75-132"), sep = '\n')
+```
+
+## 50-bp chunks: SH-like of 90% or above
+
+(The first three steps were identical to those described above.)
+    
+### Phase 1: get_var_length
+
+```
+python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_90/ --flend .tre --outf var-chunks90 --outg alepisaurus_ferox,ceratoscopelus_warmingii
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("var-chunks90"), sep = '\n')
+```
+
+### Phase 2: get_bp_genetrees
+
+```
+python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_90/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf bp-chunks90
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("bp-chunks90"), sep = '\n')
+```
+
+### Phase 3: combine_results
+
+```
+python src/combine_results.py var-chunks90 bp-chunks90 --outf comb-chunks90
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("comb-chunks75"), sep = '\n')
+```
+
+(Delete the lines with NAs)
+
+```{r, echo = FALSE, eval = FALSE}
+combchunks90 <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/comb-chunks90", fill = TRUE)
+filtered <- na.omit(combchunks90)
+write.table(filtered,
+      "/Users/David/Grive/Alfaro_Lab/SortaDate/comb-chunks90-filtered",
+      sep = "\t",
+      quote = FALSE,
+      row.names = FALSE,
+      col.names = FALSE)
+```
+
+### Phase 4: get_good_genes
+
+In order of descending priority: bipartition support, root-to-tip variance, tree length
+
+```
+python src/get_good_genes.py comb-chunks90-filtered --max 3 --order 3,1,2 --outf gg-chunks90-312
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks90-312"), sep = '\n')
+```
+
+In order of descending priority: bipartition support, tree length, root-to-tip variance
+
+```
+python src/get_good_genes.py comb-chunks90-filtered --max 3 --order 3,2,1 --outf gg-chunks90-321
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks90-321"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```
+python src/get_good_genes.py comb-chunks90-filtered --max 3 --order 2,1,3 --outf gg-chunks90-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks90-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```
+python src/get_good_genes.py comb-chunks90-filtered --max 3 --order 2,3,1 --outf gg-chunks90-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks90-231"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, tree length, bipartition support 
+
+```
+python src/get_good_genes.py comb-chunks90-filtered --max 3 --order 1,2,3 --outf gg-chunks90-123
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks90-123"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, bipartition support, tree length
+
+```
+python src/get_good_genes.py comb-chunks90-filtered --max 3 --order 1,3,2 --outf gg-chunks90-132
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("gg-chunks90-132"), sep = '\n')
+```
