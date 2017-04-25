@@ -893,6 +893,14 @@ write.table(filtered,
       col.names = FALSE)
 ```
 
+```{r, echo=FALSE}
+z <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/comb-chunks75-filtered")
+colnames(z) <- c("name", "root_to_tip_var", "treelength", "bipartition")
+hist(z$bipartition, xlab = "Bipartition support", breaks=30, col="cornflowerblue", main="Histogram of bipartition support")
+hist(z$root_to_tip_var, xlim=c(0, 1), breaks = 5000, xlab = "Root-to-tip variance", col="greenyellow", main="Histogram of root-to-tip variance (excluding outliers)")
+hist(z$treelength, xlab = "Tree length", col="lightcoral", main="Histogram of tree length")
+```
+
 ### Phase 4: get_good_genes
 
 In order of descending priority: bipartition support, root-to-tip variance, tree length
@@ -1000,6 +1008,14 @@ write.table(filtered,
       quote = FALSE,
       row.names = FALSE,
       col.names = FALSE)
+```
+
+```{r, echo=FALSE}
+a <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/comb-chunks90-filtered")
+colnames(a) <- c("name", "root_to_tip_var", "treelength", "bipartition")
+hist(a$bipartition, xlab = "Bipartition support", col="cornflowerblue", main="Histogram of bipartition support")
+hist(a$root_to_tip_var, xlim=c(0, 5), breaks = 5000, xlab = "Root-to-tip variance", col="greenyellow", main="Histogram of root-to-tip variance (excluding outliers)")
+hist(a$treelength, xlab = "Tree length", col="lightcoral", main="Histogram of tree length")
 ```
 
 ### Phase 4: get_good_genes
