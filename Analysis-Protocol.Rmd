@@ -2251,9 +2251,92 @@ beast -threads 12 -beagle_SSE rcluster2rlc.xml
 beast -threads 12 -beagle_SSE rcluster3rlc.xml
 ```
 
+(**Note:** Not finished because of the leontocebus power outage; not restarted -- root age values did not seem promising.)
+
+# Best partition selected by SortaDate
+
+## PhyloBayes
+
+The initial PhyloBayes run was conducted without calibrations and served to estimate the birth-death model hyperparameters:
+
+```
+../pb -d 8be7c94dcf2d71970c663f6710af40d7.phy -T 12_no_outgroups_scheme_3.tre -ln -bd -gtr -dgam 4 bestnocal
+```
+
+The analysis was soft-stopped on Monday 04/24/2017 at 10:44 PM at 6137 generations, with the following ESS values:
+
+parameter | ESS 
+----------|-----
+states    | 6137     
+loglik    | 3195    
+length    | 2230
+sigma     | 1835
+mu        | 340     
+meanrates | 656 
+p1        | 523
+p2        | 210
+alpha     | 1767
+nmode     | -      
+stat      | 2138  
+statalpha | -        
+rrent     | 2576    
+meanrr    | 359     
+kappa     | -        
+allocent  | -        
+
+Based on these and on the maximum autocorrelation time shown by Tracer (p2; 26.34), the chain was summarized as follows:
+
+```
+../readdiv -x 614 27 bestnocal
+```
+
+This command provided the following summary of the posterior distributions for p1 and p2:
+
+p1                        | p2
+--------------------------|---------------------------
+0.00127672 +/- 0.00105001 | 0.000816072 +/- 0.00030442
+
+The calibrated analysis was thus run under the following settings:
+
+```
+../pb -d 8be7c94dcf2d71970c663f6710af40d7.phy -T 12_no_outgroups_scheme_3.tre -ln -bd 0.00127672 0.000816072 -cal calib_root_corrected -sb -gtr -dgam 4 bestcal
+```
+
 ## PAML / mcmcTREE
 
 In order to make the analysis more directly comparable to the results obtained using BEAST (see below), a root calibration of 120.5 Ma (rather than 113.02 Ma) was used in baseml to estimate the mean susbtitution rate. The time unit was set to one hundred million years (i.e., the calibration was denoted as "1.205"). All other settings were identical to those employed in the baseml analyses reported above.
+
+Baseml estimated the rate of evolution of the partition to be 0.237600 substitutions per one time unit (i.e., per 100 million years). The rate parameter ($\beta$) of `rgene_gamma` was set to a value such that $\frac{2}{\beta}$ equals the rate above expressed in terms of tens of millions of years:
+
+```{r, echo = FALSE}
+rate_best <- 0.2376
+beta_best <- 2/(rate_best/10)
+paste("beta_best", beta_best, sep = " = ")
+```
+
+Resulting in the following `rgene_gamma` distribution:
+
+```{r, echo=FALSE}
+curve(dgamma(x, 2, beta_best), from=0, to=1, 
+      main = "Best partition rgene_gamma prior", ylab = "Probability density")
+```
+
+The hyperprior assigned to `sigma2_gamma` was identical to that used in the previous analyses, with $\sigma^2 \sim \Gamma\left(\alpha = 1, \beta = 10\right)$. The overall rate distribution can be visualized as follows (with the mean and standard deviation set to the expected values of the respective hyperpriors):
+
+```{r, echo = FALSE}
+alpha_mean <- 2
+alpha_stdev <- 1
+beta_stdev <- 10
+curve(dlnorm(x, meanlog = log(alpha_mean/beta_best), sdlog = sqrt(alpha_stdev/beta_stdev)), from=0, to=1, main = "Relaxed clock rate distribution", xlab = "Rate", ylab = "Probability density")
+```
+
+Next, a Hessian matrix was generated and stored in `out.BV` (mcmcTREE runtime = 2:27) using the following command:
+
+```
+mcmctree bestmcmctree.ctl
+```
+
+After the appropriate modifications of the control and output files, a second mcmcTREE analysis was started using the same command (runtime = 
 
 ## BEAST 
 
