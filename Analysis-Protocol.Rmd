@@ -2302,6 +2302,56 @@ The calibrated analysis was thus run under the following settings:
 ../pb -d 8be7c94dcf2d71970c663f6710af40d7.phy -T 12_no_outgroups_scheme_3.tre -ln -bd 0.00127672 0.000816072 -cal calib_root_corrected -sb -gtr -dgam 4 bestcal
 ```
 
+The chain was paused on Thursday 04/27/2017 at 9:41 AM at 11946 generations. The effective sample sizes of individual parameters were as follows:
+
+parameter | ESS
+----------|------
+states    | 11946    
+loglik    | 5175   
+length    | 4494     
+sigma     | 4181      
+mu        | 748  
+meanrates | 915
+p1        | -           
+p2        | -          
+scale     | 1351 
+alpha     | 3754  
+nmode     | -                
+stat      | 3739   
+statalpha | -            
+rrent     | 5510  
+meanrr    | 771
+kappa     | -                 
+allocent  | -    
+
+The chain was then summarized under the following settings, which were again based on the maximum autocorrelation time observed in Tracer (mu; 14.38):
+
+```
+../readdiv -x 1195 25 bestcal
+```
+
+![Best partition PhyloBayes time tree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Best_partition/PhyloBayes_Final_(Calib)/bestcal_sample.labels.png)
+
+A comparison of the mean estimated node ages with the lower and upper bounds placed on their respective priors is presented in the table below, with underflows in bold:
+
+Calibration      | Lower bound | Upper bound | Node number | Mean    
+-----------------|-------------|-------------|-------------|------------
+*Aipichthys*     | 98.0        | 128.82      | 119         | 123.787  
+*Berybolcensis*  | 49.0        | 109.29      | 132         | 83.582 
+*Calatomus*      | 11.9        | 43.95       | 210         | 34.2084   
+Chaetodontidae   | 29.62       | 59.26       | 220         | 58.0471 
+*Eastmanelepes*  | 49.0        | 61.61       | 195         | 53.8745
+*Eobuglossus*    | 41.2        | 53.88       | 189         | 46.8092  
+*Eucoelopoma*    | 54.17       | 95.58       | 162         | 60.108 
+*Homonotichthys* | 93.9        | 116.35      | 123         | 113.319
+*Mcconichthys*   | 63.1        | 93.51       | 124         | **46.0858**
+*Mene*           | 55.2        | 95.64       | 192         | 72.7587
+*Ramphexocoetus* | 49.0        | 80.52       | 173         | 77.9238
+Root             | 98.0        | 143.0       | 118         | 141.056
+*Tarkus*         | 49.0        | 53.93       | 229         | 51.1028
+
+More information on overflows and underflows is given in the respective `_sample.calib` file.
+
 ## PAML / mcmcTREE
 
 In order to make the analysis more directly comparable to the results obtained using BEAST (see below), a root calibration of 120.5 Ma (rather than 113.02 Ma) was used in baseml to estimate the mean susbtitution rate. The time unit was set to one hundred million years (i.e., the calibration was denoted as "1.205"). All other settings were identical to those employed in the baseml analyses reported above.
@@ -2330,13 +2380,28 @@ beta_stdev <- 10
 curve(dlnorm(x, meanlog = log(alpha_mean/beta_best), sdlog = sqrt(alpha_stdev/beta_stdev)), from=0, to=1, main = "Relaxed clock rate distribution", xlab = "Rate", ylab = "Probability density")
 ```
 
-Next, a Hessian matrix was generated and stored in `out.BV` (mcmcTREE runtime = 2:27) using the following command:
+Next, a Hessian matrix was generated and stored in `out.BV` using the following command:
 
 ```
 mcmctree bestmcmctree.ctl
 ```
 
-After the appropriate modifications of the control and output files, a second mcmcTREE analysis was started using the same command (runtime = 
+After the appropriate modifications of the control and output files, a second mcmcTREE analysis was started using the same command.
+
+Chain  | Hessian matrix estimation | Time tree analysis
+-------|---------------------------|-------------------
+best   | 2:27                      | 50:40:01
+best2  | 4:52                      |
+best3  | 4:52                      |
+best4  | 4:43                      |
+best5  | 5:22                      |
+best6  | 4:46                      |
+best7  | 4:39                      |
+best8  | 5:00                      |
+best9  | 5:19                      |
+best10 | 5:20                      |
+
+![PAML time tree of the best partition, run 1](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Best_partition/best1.png)
 
 ## BEAST 
 
