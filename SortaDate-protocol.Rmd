@@ -7,33 +7,11 @@ output: html_document
 
 # Individual UCEs
 
-The input for a SortaDate analysis should consist of a directory of gene alignments and corresponding gene trees. Therefore, it was first necessary to construct the individual gene trees. However, since the alignments do not all contain the same set of taxa, the taxa that are not present in all of the alignments had to be removed. These taxa were identified using an error message thrown by the `get_var_length`, after it was run for the first time in the manner described below on the original set of unpruned alignments: 
-
-- apogon_lateralis
-- apogon_maculatus
-- bathygobius_soporator
-- erotelis_smaragdus
-- evorthodus_minutus
-- gillichthys_seta
-- mogurnda_adspersa
-- odontobutis_obscura
-- ophiocara_porocephala
-- ostorhinchus_nigrofasciatus
-- periophthalmus_barbarus
-- rondeletia_loricata
-- valenciennea_strigata
-
-The taxon removal was performed using the Python3 package AMAS:
-
-```
-python3 AMAS.py remove --taxa-to-remove apogon_lateralis apogon_maculatus bathygobius_soporator erotelis_smaragdus evorthodus_minutus gillichthys_seta mogurnda_adspersa odontobutis_obscura ophiocara_porocephala ostorhinchus_nigrofasciatus periophthalmus_barbarus rondeletia_loricata valenciennea_strigata --data-type dna -f fasta --in-files *fasta --out-format fasta -g pruned -c 4
-```
-
-The gene trees were then constructed using ETE toolkit:
+The gene trees were constructed using ETE toolkit:
 
 Preparatory step: installing Miniconda, following the instructions from <http://etetoolkit.org/download/>
 
-```
+```{r, echo = FALSE, eval = FALSE}
 curl -L 'http://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh' -o Miniconda2-latest-MacOSX-x86_64.sh
 
 # Note that the original link does not work
@@ -146,8 +124,8 @@ length(commands) - n
 `#!/bin/bash` was then inserted into the first line of the file to convert it into a shell script. The script was run as follows:
 
 ```
-chmod 755 /Users/David/Grive/Alfaro_Lab/SortaDate/gene-tree-analysis.sh
-/Users/David/Grive/Alfaro_Lab/SortaDate/gene-tree-analysis.sh
+chmod 755 /Users/David/Grive/Alfaro_Lab/SortaDate/Locus_analysis/gene-tree-analysis.sh
+/Users/David/Grive/Alfaro_Lab/SortaDate/Locus_analysis/gene-tree-analysis.sh
 ```
 
 Write a new script that will copy the trees from the nested subdirectories to the same directory where the alignment files are located:
@@ -203,31 +181,31 @@ write(renametrees, "rename-trees.sh")
 ### Phase 1: get_var_length
 
 ```
-python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA/ --flend .tre --outf var-uces --outg alepisaurus_ferox,ceratoscopelus_warmingii
+python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA/ --flend .tre --outf Locus_analysis/var-uces --outg alepisaurus_ferox,ceratoscopelus_warmingii
 ```
 
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("var-uces"), sep = '\n')
+```{r comment='', eval=FALSE, echo = FALSE}
+cat(readLines("Locus_analysis/var-uces"), sep = '\n')
 ```
 
 ### Phase 2: get_bp_genetrees
 
 ```
-python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf bp-uces
+python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/FASTA/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf Locus_analysis/bp-uces
 ```
 
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("bp-uces"), sep = '\n')
+```{r comment='', eval=FALSE, echo = FALSE}
+cat(readLines("Locus_analysis/bp-uces"), sep = '\n')
 ```
 
 ### Phase 3: combine_results
 
 ```
-python src/combine_results.py var-uces bp-uces --outf comb-uces
+python src/combine_results.py Locus_analysis/var-uces Locus_analysis/bp-uces --outf Locus_analysis/comb-uces
 ```
 
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("comb-uces"), sep = '\n')
+```{r comment='', eval=FALSE, echo = FALSE}
+cat(readLines("Locus_analysis/comb-uces"), sep = '\n')
 ```
 
 ### Phase 4: get_good_genes
@@ -235,61 +213,61 @@ cat(readLines("comb-uces"), sep = '\n')
 In order of descending priority: bipartition support, root-to-tip variance, tree length
 
 ```
-python src/get_good_genes.py comb-uces --max 3 --order 3,1,2 --outf gg-uces-312
+python src/get_good_genes.py Locus_analysis/comb-uces --max 3 --order 3,1,2 --outf Locus_analysis/gg-uces-312
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-uces-312"), sep = '\n')
+cat(readLines("Locus_analysis/gg-uces-312"), sep = '\n')
 ```
 
 In order of descending priority: bipartition support, tree length, root-to-tip variance
 
 ```
-python src/get_good_genes.py comb-uces --max 3 --order 3,2,1 --outf gg-uces-321
+python src/get_good_genes.py Locus_analysis/comb-uces --max 3 --order 3,2,1 --outf Locus_analysis/gg-uces-321
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-uces-321"), sep = '\n')
-```
-
-In order of descending priority: tree length, root-to-tip variance, bipartition support
-
-```
-python src/get_good_genes.py comb-uces --max 3 --order 2,1,3 --outf gg-uces-213
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-uces-213"), sep = '\n')
-```
-
-In order of descending priority: tree length, bipartition support, root-to-tip variance
-
-```
-python src/get_good_genes.py comb-uces --max 3 --order 2,3,1 --outf gg-uces-231
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-uces-231"), sep = '\n')
+cat(readLines("Locus_analysis/gg-uces-321"), sep = '\n')
 ```
 
 In order of descending priority: root-to-tip variance, tree length, bipartition support
 
 ```
-python src/get_good_genes.py comb-uces --max 3 --order 1,2,3 --outf gg-uces-123
+python src/get_good_genes.py Locus_analysis/comb-uces --max 3 --order 1,2,3 --outf Locus_analysis/gg-uces-123
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-uces-123"), sep = '\n')
+cat(readLines("Locus_analysis/gg-uces-123"), sep = '\n')
 ```
 
 In order of descending priority: root-to-tip variance, bipartition support, tree length
 
 ```
-python src/get_good_genes.py comb-uces --max 3 --order 1,3,2 --outf gg-uces-132
+python src/get_good_genes.py Locus_analysis/comb-uces --max 3 --order 1,3,2 --outf Locus_analysis/gg-uces-132
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-uces-132"), sep = '\n')
+cat(readLines("Locus_analysis/gg-uces-132"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```
+python src/get_good_genes.py Locus_analysis/comb-uces --max 3 --order 2,1,3 --outf Locus_analysis/gg-uces-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Locus_analysis/gg-uces-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```
+python src/get_good_genes.py Locus_analysis/comb-uces --max 3 --order 2,3,1 --outf Locus_analysis/gg-uces-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Locus_analysis/gg-uces-231"), sep = '\n')
 ```
 
 # k-means partitions
@@ -425,8 +403,8 @@ renamepartitions <- paste(oldpartition, newpartition, ".fasta &&", sep = "")
 python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/k-means_partitions/FASTA/ --flend .tre --outf var-kmeans --outg alepisaurus_ferox,ceratoscopelus_warmingii
 ```
 
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("var-kmeans"), sep = '\n')
+```{r eval = FALSE, comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("kmeans_analysis/var-kmeans"), sep = '\n')
 ```
 
 ### Phase 2: get_bp_genetrees
@@ -435,8 +413,8 @@ cat(readLines("var-kmeans"), sep = '\n')
 python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/k-means_partitions/FASTA/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf bp-kmeans
 ```
 
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("bp-kmeans"), sep = '\n')
+```{r eval = FALSE, comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("kmeans_analysis/bp-kmeans"), sep = '\n')
 ```
 
 ### Phase 3: combine_results
@@ -445,70 +423,70 @@ cat(readLines("bp-kmeans"), sep = '\n')
 python src/combine_results.py var-kmeans bp-kmeans --outf comb-kmeans
 ```
 
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("comb-kmeans"), sep = '\n')
+```{r eval = FALSE, comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("kmeans_analysis/comb-kmeans"), sep = '\n')
 ```
 
 ### Phase 4: get_good_genes
 
 In order of descending priority: bipartition support, root-to-tip variance, tree length
 
-```
-python src/get_good_genes.py comb-kmeans --max 3 --order 3,1,2 --outf gg-kmeans-312
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py kmeans_analysis/comb-kmeans --max 3 --order 3,1,2 --outf kmeans_analysis/gg-kmeans-312
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-kmeans-312"), sep = '\n')
+cat(readLines("kmeans_analysis/gg-kmeans-312"), sep = '\n')
 ```
 
 In order of descending priority: bipartition support, tree length, root-to-tip variance
 
-```
-python src/get_good_genes.py comb-kmeans --max 3 --order 3,2,1 --outf gg-kmeans-321
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-kmeans-321"), sep = '\n')
-```
-
-In order of descending priority: tree length, root-to-tip variance, bipartition support
-
-```
-python src/get_good_genes.py comb-kmeans --max 3 --order 2,1,3 --outf gg-kmeans-213
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py kmeans_analysis/comb-kmeans --max 3 --order 3,2,1 --outf kmeans_analysis/gg-kmeans-321
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-kmeans-213"), sep = '\n')
-```
-
-In order of descending priority: tree length, bipartition support, root-to-tip variance
-
-```
-python src/get_good_genes.py comb-kmeans --max 3 --order 2,3,1 --outf gg-kmeans-231
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-kmeans-231"), sep = '\n')
+cat(readLines("kmeans_analysis/gg-kmeans-321"), sep = '\n')
 ```
 
 In order of descending priority: root-to-tip variance, tree length, bipartition support 
 
-```
-python src/get_good_genes.py comb-kmeans --max 3 --order 1,2,3 --outf gg-kmeans-123
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py kmeans_analysis/comb-kmeans --max 3 --order 1,2,3 --outf kmeans_analysis/gg-kmeans-123
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-kmeans-123"), sep = '\n')
+cat(readLines("kmeans_analysis/gg-kmeans-123"), sep = '\n')
 ```
 
 In order of descending priority: root-to-tip variance, bipartition support, tree length
 
-```
-python src/get_good_genes.py comb-kmeans --max 3 --order 1,3,2 --outf gg-kmeans-132
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py kmeans_analysis/comb-kmeans --max 3 --order 1,3,2 --outf kmeans_analysis/gg-kmeans-132
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-kmeans-132"), sep = '\n')
+cat(readLines("kmeans_analysis/gg-kmeans-132"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py kmeans_analysis/comb-kmeans --max 3 --order 2,1,3 --outf kmeans_analysis/gg-kmeans-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("kmeans_analysis/gg-kmeans-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py kmeans_analysis/comb-kmeans --max 3 --order 2,3,1 --outf kmeans_analysis/gg-kmeans-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("kmeans_analysis/gg-kmeans-231"), sep = '\n')
 ```
 
 # 50-bp Chunks
@@ -720,96 +698,147 @@ brew install rename
 rename -S .fasta.final_tree.nw .tre *.fasta.final_tree.nw
 ```
 
+Running `ls *.fasta | wc -l` and `ls *.nw | wc -l` in the directory showed that out of 1826 chunk FASTA files, no more than 1070 had tree files associated with them.
+
 ### Phase 1: get_var_length
 
 ```
-python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/ --flend .tre --outf var-chunks --outg alepisaurus_ferox,ceratoscopelus_warmingii
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("var-chunks"), sep = '\n')
+python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/ --flend .tre --outf Chunk_analysis/var-chunks --outg alepisaurus_ferox,ceratoscopelus_warmingii
 ```
 
 ### Phase 2: get_bp_genetrees
 
 ```
-python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf bp-chunks
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("bp-chunks"), sep = '\n')
+python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf Chunk_analysis/bp-chunks
 ```
 
 ### Phase 3: combine_results
 
 ```
-python src/combine_results.py var-chunks bp-chunks --outf comb-chunks
+python src/combine_results.py Chunk_analysis/var-chunks Chunk_analysis/bp-chunks --outf Chunk_analysis/comb-chunks
 ```
 
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("comb-chunks"), sep = '\n')
+Calculate the Robinson-Foulds distances of the individual chunk trees from the reference tree using the Python script below:
+
+```
+import os, uuid
+from ete3 import Tree
+
+t2 = Tree("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre")
+for file in os.listdir("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks/"):
+    if file.endswith(".tre"):
+        t1 = Tree(file)
+        try:
+            rf = t1.robinson_foulds(t2)
+            print str(file), (rf[0])
+        except:
+            pass
+```
+
+```{r, echo=FALSE}
+l <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk_analysis/comb-chunks")
+colnames(l) <- c("name", "root_to_tip_var", "treelength", "bipartition")
+hist(l$bipartition, xlab = "Bipartition support", col="cornflowerblue", main="Histogram of bipartition support (all chunks)")
+hist(l$root_to_tip_var, breaks = 5000, xlim=c(0,2), xlab = "Root-to-tip variance", col="greenyellow", main="Histogram of root-to-tip variance\n(all chunks, excluding outliers)")
+hist(l$treelength, xlab = "Tree length", col="lightcoral", main="Histogram of tree length (all chunks)")
+```
+
+```{r, echo = FALSE}
+a <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk_analysis/Robinson-Foulds_Chunks.txt")
+hist(a[,2], xlab = "Robinson-Foulds distance", breaks=c(seq(min(a[,2]), max(a[,2]), by = 2)), 
+     col="mediumpurple", main="RF distance distribution across chunks")
+```
+
+#### Step 1 of filtering: remove trees of zero length
+
+No effect: the minimum observed tree length is non-zero and equal to:
+
+```{r, echo = FALSE}
+l <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk_analysis/comb-chunks")
+colnames(l) <- c("name", "root_to_tip_var", "treelength", "bipartition")
+min(l$treelength)
 ```
 
 ### Phase 4: get_good_genes
 
 In order of descending priority: bipartition support, root-to-tip variance, tree length
 
-```
-python src/get_good_genes.py comb-chunks --max 3 --order 3,1,2 --outf gg-chunks-312
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk_analysis/comb-chunks --max 3 --order 3,1,2 --outf Chunk_analysis/gg-chunks-312
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks-312"), sep = '\n')
+cat(readLines("Chunk_analysis/gg-chunks-312"), sep = '\n')
+```
+
+```{r, echo = FALSE}
+chunks <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk_analysis/gg-chunks-312", stringsAsFactors = FALSE)
+distances <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk_analysis/Robinson-Foulds_Chunks.txt", stringsAsFactors = FALSE)
+colnames(distances) <- c("chunk", "rf")
+best <- distances[distances$chunk == chunks[2,1],]
+secondbest <- distances[distances$chunk == chunks[3,1],]
+thirdbest <- distances[distances$chunk == chunks[4,1],]
+print("The Robinson-Foulds distances of the three bets chunks from the reference tree are as follows:")
+best
+secondbest
+thirdbest
+```
+
+The chunk with the minimum RF distance from the reference tree:
+
+```{r, echo = FALSE}
+minimum <- distances[distances$rf == min(distances$rf),]
+print(minimum)
 ```
 
 In order of descending priority: bipartition support, tree length, root-to-tip variance
 
-```
-python src/get_good_genes.py comb-chunks --max 3 --order 3,2,1 --outf gg-chunks-321
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks-321"), sep = '\n')
-```
-
-In order of descending priority: tree length, root-to-tip variance, bipartition support
-
-```
-python src/get_good_genes.py comb-chunks --max 3 --order 2,1,3 --outf gg-chunks-213
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk_analysis/comb-chunks --max 3 --order 3,2,1 --outf Chunk_analysis/gg-chunks-321
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks-213"), sep = '\n')
-```
-
-In order of descending priority: tree length, bipartition support, root-to-tip variance
-
-```
-python src/get_good_genes.py comb-chunks --max 3 --order 2,3,1 --outf gg-chunks-231
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks-231"), sep = '\n')
+cat(readLines("Chunk_analysis/gg-chunks-321"), sep = '\n')
 ```
 
 In order of descending priority: root-to-tip variance, tree length, bipartition support 
 
-```
-python src/get_good_genes.py comb-chunks --max 3 --order 1,2,3 --outf gg-chunks-123
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk_analysis/comb-chunks --max 3 --order 1,2,3 --outf Chunk_analysis/gg-chunks-123
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks-123"), sep = '\n')
+cat(readLines("Chunk_analysis/gg-chunks-123"), sep = '\n')
 ```
 
 In order of descending priority: root-to-tip variance, bipartition support, tree length
 
-```
-python src/get_good_genes.py comb-chunks --max 3 --order 1,3,2 --outf gg-chunks-132
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk_analysis/comb-chunks --max 3 --order 1,3,2 --outf Chunk_analysis/gg-chunks-132
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks-132"), sep = '\n')
+cat(readLines("Chunk_analysis/gg-chunks-132"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk_analysis/comb-chunks --max 3 --order 2,1,3 --outf Chunk_analysis/gg-chunks-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Chunk_analysis/gg-chunks-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk_analysis/comb-chunks --max 3 --order 2,3,1 --outf Chunk_analysis/gg-chunks-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Chunk_analysis/gg-chunks-231"), sep = '\n')
 ```
 
 ## 50-bp chunks: SH-like of 75% or above
@@ -836,7 +865,7 @@ cat(readLines("gg-chunks-132"), sep = '\n')
             print t.get_ascii(attributes=['support', 'name'])
 
             for node in t.get_descendants():
-                if not node.is_leaf() and node.support <= 0.9:
+                if not node.is_leaf() and node.support <= 0.75:
                     node.delete()
 
             print t.get_ascii(attributes=['support', 'name'])
@@ -853,114 +882,142 @@ cat(readLines("gg-chunks-132"), sep = '\n')
 ### Phase 1: get_var_length
 
 ```
-python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_75/ --flend .tre --outf var-chunks75 --outg alepisaurus_ferox,ceratoscopelus_warmingii
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("var-chunks75"), sep = '\n')
+python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_75/ --flend .tre --outf Chunk75_analysis/var-chunks75 --outg alepisaurus_ferox,ceratoscopelus_warmingii
 ```
 
 ### Phase 2: get_bp_genetrees
 
 ```
-python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_75/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf bp-chunks75
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("bp-chunks75"), sep = '\n')
+python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_75/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf Chunk75_analysis/bp-chunks75
 ```
 
 ### Phase 3: combine_results
 
 ```
-python src/combine_results.py var-chunks75 bp-chunks75 --outf comb-chunks75
+python src/combine_results.py Chunk75_analysis/var-chunks75 Chunk75_analysis/bp-chunks75 --outf Chunk75_analysis/comb-chunks75
 ```
 
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("comb-chunks75"), sep = '\n')
-```
-
-Write a script to delete the lines containing NAs:
+A script was written to delete all lines containing NAs, as well as all lines that only contained an entry for bipartition support but none for root-to-tip branch length variance or tree length. This was accomplished by filling these partially empty lines with NAs in the first step and deleting them in the second step:
 
 ```{r, eval = FALSE}
-combchunks75 <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/comb-chunks75", fill = TRUE)
+combchunks75 <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk75_analysis/comb-chunks75", fill = TRUE)
 filtered <- na.omit(combchunks75)
 write.table(filtered,
-      "/Users/David/Grive/Alfaro_Lab/SortaDate/comb-chunks75-filtered",
+      "/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk75_analysis/comb-chunks75-filtered",
       sep = "\t",
       quote = FALSE,
       row.names = FALSE,
       col.names = FALSE)
 ```
 
+The length of the filtered comb file is 901 lines, meaning that SortaDate failed to obtain root-to-tip variance and/or tree length for 169 trees.
+
 ```{r, echo=FALSE}
-z <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/comb-chunks75-filtered")
+z <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk75_analysis/comb-chunks75-filtered")
 colnames(z) <- c("name", "root_to_tip_var", "treelength", "bipartition")
-hist(z$bipartition, xlab = "Bipartition support", breaks=30, col="cornflowerblue", main="Histogram of bipartition support")
-hist(z$root_to_tip_var, xlim=c(0, 1), breaks = 5000, xlab = "Root-to-tip variance", col="greenyellow", main="Histogram of root-to-tip variance (excluding outliers)")
-hist(z$treelength, xlab = "Tree length", col="lightcoral", main="Histogram of tree length")
+hist(z$bipartition, xlab = "Bipartition support", breaks=30, col="cornflowerblue", main="Histogram of bipartition support (SH-like > 0.75)")
+hist(z$root_to_tip_var, xlim=c(0, 1), breaks = 5000, xlab = "Root-to-tip variance", col="greenyellow", main="Histogram of root-to-tip variance\n(SH-like > 0.75, excluding outliers)")
+hist(z$treelength, xlab = "Tree length", col="lightcoral", main="Histogram of tree length (SH-like > 0.75)")
 ```
+
+```{r, echo = FALSE}
+b <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk75_analysis/Robinson-Foulds_Chunks_75.txt")
+hist(b[,2], xlab = "Robinson-Foulds distance", breaks=c(seq(min(b[,2]), max(b[,2]), by = 1)), 
+     col="mediumpurple", main="RF distance distribution across chunks (SH-like > 0.75)")
+```
+
+#### Step 1 of filtering: remove trees of zero length
+
+No effect: the minimum observed tree length is non-zero and equal to:
+
+```{r, echo = FALSE}
+z <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk75_analysis/comb-chunks75-filtered")
+colnames(z) <- c("name", "root_to_tip_var", "treelength", "bipartition")
+min(z$treelength)
+```
+
+Note that this result is orders of magnitude larger than those observed in the other five chunk datasets.
 
 ### Phase 4: get_good_genes
 
 In order of descending priority: bipartition support, root-to-tip variance, tree length
 
-```
-python src/get_good_genes.py comb-chunks75-filtered --max 3 --order 3,1,2 --outf gg-chunks75-312
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk75_analysis/comb-chunks75-filtered --max 3 --order 3,1,2 --outf Chunk75_analysis/gg-chunks75-312
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks75-312"), sep = '\n')
+cat(readLines("Chunk75_analysis/gg-chunks75-312"), sep = '\n')
+```
+
+```{r, echo=FALSE}
+chunks <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk75_analysis/gg-chunks75-312", stringsAsFactors = FALSE)
+distances <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk75_analysis/Robinson-Foulds_Chunks_75.txt", stringsAsFactors = FALSE)
+colnames(distances) <- c("chunk", "rf")
+best <- distances[distances$chunk == chunks[2,1],]
+secondbest <- distances[distances$chunk == chunks[3,1],]
+thirdbest <- distances[distances$chunk == chunks[4,1],]
+print("The Robinson-Foulds distances of the three best chunks from the reference tree are as follows:")
+best
+secondbest
+thirdbest
+```
+
+The chunk with the minimum RF distance from the reference tree:
+
+```{r, echo = FALSE}
+minimum <- distances[distances$rf == min(distances$rf),]
+print(minimum)
 ```
 
 In order of descending priority: bipartition support, tree length, root-to-tip variance
 
-```
-python src/get_good_genes.py comb-chunks75-filtered --max 3 --order 3,2,1 --outf gg-chunks75-321
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks75-321"), sep = '\n')
-```
-
-In order of descending priority: tree length, root-to-tip variance, bipartition support
-
-```
-python src/get_good_genes.py comb-chunks75-filtered --max 3 --order 2,1,3 --outf gg-chunks75-213
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk75_analysis/comb-chunks75-filtered --max 3 --order 3,2,1 --outf Chunk75_analysis/gg-chunks75-321
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks75-213"), sep = '\n')
-```
-
-In order of descending priority: tree length, bipartition support, root-to-tip variance
-
-```
-python src/get_good_genes.py comb-chunks75-filtered --max 3 --order 2,3,1 --outf gg-chunks75-231
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks75-231"), sep = '\n')
+cat(readLines("Chunk75_analysis/gg-chunks75-321"), sep = '\n')
 ```
 
 In order of descending priority: root-to-tip variance, tree length, bipartition support 
 
-```
-python src/get_good_genes.py comb-chunks75-filtered --max 3 --order 1,2,3 --outf gg-chunks75-123
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk75_analysis/comb-chunks75-filtered --max 3 --order 1,2,3 --outf Chunk75_analysis/gg-chunks75-123
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks75-123"), sep = '\n')
+cat(readLines("Chunk75_analysis/gg-chunks75-123"), sep = '\n')
 ```
 
 In order of descending priority: root-to-tip variance, bipartition support, tree length
 
-```
-python src/get_good_genes.py comb-chunks75-filtered --max 3 --order 1,3,2 --outf gg-chunks75-132
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk75_analysis/comb-chunks75-filtered --max 3 --order 1,3,2 --outf Chunk75_analysis/gg-chunks75-132
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks75-132"), sep = '\n')
+cat(readLines("Chunk75_analysis/gg-chunks75-132"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk75_analysis/comb-chunks75-filtered --max 3 --order 2,1,3 --outf Chunk75_analysis/gg-chunks75-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Chunk75_analysis/gg-chunks75-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk75_analysis/comb-chunks75-filtered --max 3 --order 2,3,1 --outf Chunk75_analysis/gg-chunks75-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Chunk75_analysis/gg-chunks75-231"), sep = '\n')
 ```
 
 ## 50-bp chunks: SH-like of 90% or above
@@ -970,37 +1027,37 @@ cat(readLines("gg-chunks75-132"), sep = '\n')
 ### Phase 1: get_var_length
 
 ```
-python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_90/ --flend .tre --outf var-chunks90 --outg alepisaurus_ferox,ceratoscopelus_warmingii
+python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_90/ --flend .tre --outf Chunk90_analysis/var-chunks90 --outg alepisaurus_ferox,ceratoscopelus_warmingii
 ```
 
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("var-chunks90"), sep = '\n')
+```{r comment='', eval=FALSE, echo = FALSE}
+cat(readLines("Chunk90_analysis/var-chunks90"), sep = '\n')
 ```
 
 ### Phase 2: get_bp_genetrees
 
 ```
-python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_90/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf bp-chunks90
+python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-114-taxa/Chunks_90/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf Chunk90_analysis/bp-chunks90
 ```
 
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("bp-chunks90"), sep = '\n')
+```{r comment='', eval=FALSE, echo = FALSE}
+cat(readLines("Chunk90_analysis/bp-chunks90"), sep = '\n')
 ```
 
 ### Phase 3: combine_results
 
 ```
-python src/combine_results.py var-chunks90 bp-chunks90 --outf comb-chunks90
+python src/combine_results.py Chunk90_analysis/var-chunks90 Chunk90_analysis/bp-chunks90 --outf Chunk90_analysis/comb-chunks90
 ```
 
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("comb-chunks75"), sep = '\n')
+```{r comment='', eval=FALSE, echo = FALSE}
+cat(readLines("Chunk90_analysis/comb-chunks75"), sep = '\n')
 ```
 
-(Delete the lines with NAs)
+Delete the lines with NAs:
 
-```{r, echo = FALSE, eval = FALSE}
-combchunks90 <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/comb-chunks90", fill = TRUE)
+```{r, eval = FALSE}
+combchunks90 <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk90_analysis/comb-chunks90", fill = TRUE)
 filtered <- na.omit(combchunks90)
 write.table(filtered,
       "/Users/David/Grive/Alfaro_Lab/SortaDate/comb-chunks90-filtered",
@@ -1010,72 +1067,593 @@ write.table(filtered,
       col.names = FALSE)
 ```
 
+The length of the filtered comb file is 536 lines, meaning that SortaDate failed to obtain root-to-tip variance and/or tree length for 534 (almost 50%) trees.
+
 ```{r, echo=FALSE}
-a <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/comb-chunks90-filtered")
+a <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk90_analysis/comb-chunks90-filtered")
 colnames(a) <- c("name", "root_to_tip_var", "treelength", "bipartition")
-hist(a$bipartition, xlab = "Bipartition support", col="cornflowerblue", main="Histogram of bipartition support")
-hist(a$root_to_tip_var, xlim=c(0, 5), breaks = 5000, xlab = "Root-to-tip variance", col="greenyellow", main="Histogram of root-to-tip variance (excluding outliers)")
-hist(a$treelength, xlab = "Tree length", col="lightcoral", main="Histogram of tree length")
+hist(a$bipartition, xlab = "Bipartition support", col="cornflowerblue", main="Histogram of bipartition support (SH-like > 0.9)")
+hist(a$root_to_tip_var, xlim=c(0, 5), breaks = 5000, xlab = "Root-to-tip variance", col="greenyellow", main="Histogram of root-to-tip variance\n(SH-like > 0.9, excluding outliers)")
+hist(a$treelength, xlab = "Tree length", col="lightcoral", main="Histogram of tree length (SH-like > 0.9)")
+```
+
+```{r, echo = FALSE}
+c <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk90_analysis/Robinson-Foulds_Chunks_90.txt")
+hist(c[,2], xlab = "Robinson-Foulds distance", breaks=c(seq(min(c[,2]), max(c[,2]), by = 1)), 
+     col="mediumpurple", main="RF distance distribution across chunks (SH-like > 0.9)")
+```
+
+#### Step 1 of filtering: remove trees of zero length
+
+No effect: the minimum observed tree length is non-zero and equal to:
+
+```{r, echo = FALSE}
+a <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk90_analysis/comb-chunks90-filtered")
+colnames(a) <- c("name", "root_to_tip_var", "treelength", "bipartition")
+min(a$treelength)
 ```
 
 ### Phase 4: get_good_genes
 
 In order of descending priority: bipartition support, root-to-tip variance, tree length
 
-```
-python src/get_good_genes.py comb-chunks90-filtered --max 3 --order 3,1,2 --outf gg-chunks90-312
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk90_analysis/comb-chunks90-filtered --max 3 --order 3,1,2 --outf Chunk90_analysis/gg-chunks90-312
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks90-312"), sep = '\n')
+cat(readLines("Chunk90_analysis/gg-chunks90-312"), sep = '\n')
+```
+
+```{r, echo=FALSE}
+chunks <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk90_analysis/gg-chunks90-312", stringsAsFactors = FALSE)
+distances <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Chunk90_analysis/Robinson-Foulds_Chunks_90.txt", stringsAsFactors = FALSE)
+colnames(distances) <- c("chunk", "rf")
+best <- distances[distances$chunk == chunks[2,1],]
+secondbest <- distances[distances$chunk == chunks[3,1],]
+thirdbest <- distances[distances$chunk == chunks[4,1],]
+print("The Robinson-Foulds distances of the three best chunks from the reference tree are as follows:")
+best
+secondbest
+thirdbest
+```
+
+The chunk with the minimum RF distance from the reference tree:
+
+```{r, echo = FALSE}
+minimum <- distances[distances$rf == min(distances$rf),]
+print(minimum)
 ```
 
 In order of descending priority: bipartition support, tree length, root-to-tip variance
 
-```
-python src/get_good_genes.py comb-chunks90-filtered --max 3 --order 3,2,1 --outf gg-chunks90-321
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks90-321"), sep = '\n')
-```
-
-In order of descending priority: tree length, root-to-tip variance, bipartition support
-
-```
-python src/get_good_genes.py comb-chunks90-filtered --max 3 --order 2,1,3 --outf gg-chunks90-213
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk90_analysis/comb-chunks90-filtered --max 3 --order 3,2,1 --outf Chunk90_analysis/gg-chunks90-321
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks90-213"), sep = '\n')
-```
-
-In order of descending priority: tree length, bipartition support, root-to-tip variance
-
-```
-python src/get_good_genes.py comb-chunks90-filtered --max 3 --order 2,3,1 --outf gg-chunks90-231
-```
-
-```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks90-231"), sep = '\n')
+cat(readLines("Chunk90_analysis/gg-chunks90-321"), sep = '\n')
 ```
 
 In order of descending priority: root-to-tip variance, tree length, bipartition support 
 
-```
-python src/get_good_genes.py comb-chunks90-filtered --max 3 --order 1,2,3 --outf gg-chunks90-123
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk90_analysis/comb-chunks90-filtered --max 3 --order 1,2,3 --outf Chunk90_analysis/gg-chunks90-123
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks90-123"), sep = '\n')
+cat(readLines("Chunk90_analysis/gg-chunks90-123"), sep = '\n')
 ```
 
 In order of descending priority: root-to-tip variance, bipartition support, tree length
 
-```
-python src/get_good_genes.py comb-chunks90-filtered --max 3 --order 1,3,2 --outf gg-chunks90-132
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk90_analysis/comb-chunks90-filtered --max 3 --order 1,3,2 --outf Chunk90_analysis/gg-chunks90-132
 ```
 
 ```{r comment='', echo = FALSE, message=F, warning=F}
-cat(readLines("gg-chunks90-132"), sep = '\n')
+cat(readLines("Chunk90_analysis/gg-chunks90-132"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk90_analysis/comb-chunks90-filtered --max 3 --order 2,1,3 --outf Chunk90_analysis/gg-chunks90-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Chunk90_analysis/gg-chunks90-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Chunk90_analysis/comb-chunks90-filtered --max 3 --order 2,3,1 --outf Chunk90_analysis/gg-chunks90-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Chunk90_analysis/gg-chunks90-231"), sep = '\n')
+```
+
+# 50-bp chunks from the 90-locus dataset
+
+A bash script used to split the UCE loci into 50-bp chunks was identical to that used above, with the exception of step 3 (joining all taxa represented by a given chunk into a new FASTA file), for which the following code was used:
+
+```{r, eval = FALSE}
+    library(dplyr)
+
+    # Alternating rows (name, sequence, name, sequence) go to two different columns, so that
+    # each sequence is correctly assigned to its respective taxon:
+
+    split_seqs <- read.table("split.txt")
+    odd <- as.vector(split_seqs[seq(1, nrow(split_seqs), 2), ])
+    even <- as.vector(split_seqs[seq(2, nrow(split_seqs), 2), ])
+    odd_name <- "taxon"
+    even_name <- "sequence"
+    split_seqs_new <- data.frame(odd, even)
+    names(split_seqs_new) <- c(odd_name, even_name)
+
+    # Determine how long the locus is (i.e., how many 50-bp chunks it has been split into).
+    # This can be done by counting the number of occurrences of a single taxon name. 
+    # In principle, any name could be used, but since no taxon appears to be common to all
+    # the loci, the code below grabs the first taxon name appearing in the fasta file and
+    # counts its occurrences.
+
+    m <- paste(sapply(strsplit(as.character(split_seqs_new[1,1]), split="_", fixed=TRUE),
+                      function(x) (x[1])), 
+              "_", sapply(strsplit(as.character(split_seqs_new[1,1]), split="_", fixed=TRUE),                                function(x) (x[2])),
+                   sep = "")
+    n <- length(unique(grep(m, split_seqs_new[,1], value = TRUE)))
+
+    # Create a vector of strings that can filter taxon names according to the base pair range
+    # tag attached to their end
+
+    chunks <- vector()
+    for(i in 0:(n-1)) {
+      chunks <- append(chunks, paste("_", i*50, "bp", sep = ""))
+    }
+
+    # Create a list of data frames. Each element of the list represents a base pair range
+    # and consists of a data frame containing both the "taxon" and "sequence" columns of
+    # split_seqs_new
+
+    partition <- list()
+    for(i in 1:length(chunks)) {
+      partition[[i]] <- data.frame(filter(split_seqs_new, 
+                                          grepl(as.character(chunks[i]), taxon)))
+    }
+
+    # Create a matrix whose columns represents individual chunks (i.e., base pair ranges)
+    # and whose rows have the structure of the original split_seqs data frame -- i.e., name,
+    # sequence, name, sequence:
+
+    chunkmatrix <- matrix(ncol = length(partition), 
+                          nrow = 2*(nrow(split_seqs_new)/length(partition)))
+    for(i in 1:length(partition)) {
+      for(j in 1:nrow(partition[[i]])) {
+        chunkmatrix[(2*j - 1), i] <- as.character(partition[[i]][j, "taxon"])
+        chunkmatrix[2*j, i] <- as.character(partition[[i]][j, "sequence"])
+      }
+    }
+
+    # Print the resulting fasta files!
+
+    for(i in 1:ncol(chunkmatrix)) {
+      write(chunkmatrix[,i], paste("chunk_", i, ".fasta", sep = ""))
+    }
+```
+
+The taxon names in the chunk FASTA files were then stripped of the chunk-indicating suffixes so as to correspond with the names used in the reference tree, and a script was used to analyze all the chunks using RAxML. The resulting trees were then copied into the directory containing the chunks. Out of 6543 chunk FASTA files, only 4237 had tree files associated with them, suggesting that RAxML failed to infer a tree for a given chunk in approx. 35% of cases.
+
+### Phase 1: get_var_length
+
+```
+python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Chunks/ --flend .tre --outf Min-90-chunk_analysis/var-min-90-chunks --outg alepisaurus_ferox,ceratoscopelus_warmingii
+```
+
+Running the script produced 1029 warnings about either *Alepisaurus ferox* or *Ceratoscopelus warmingii* missing from the chunk tree. Despite this, the tree length and root-to-tip variance was computed for all the 4237 trees.
+
+### Phase 2: get_bp_genetrees
+
+```
+python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Chunks/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf Min-90-chunk_analysis/bp-min-90-chunks
+```
+
+### Phase 3: combine_results
+
+```
+python src/combine_results.py Min-90-chunk_analysis/var-min-90-chunks Min-90-chunk_analysis/bp-min-90-chunks --outf Min-90-chunk_analysis/comb-min-90-chunks
+```
+
+```{r, echo=FALSE}
+k <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk_analysis/comb-min-90-chunks")
+colnames(k) <- c("name", "root_to_tip_var", "treelength", "bipartition")
+hist(k$bipartition, xlab = "Bipartition support", col="cornflowerblue", main="Histogram of bipartition support (75%-complete dataset)")
+hist(k$root_to_tip_var, breaks = 5000, xlim=c(0,1), xlab = "Root-to-tip variance", col="greenyellow", main="Histogram of root-to-tip variance\n(75%-complete dataset, excluding outliers)")
+hist(k$treelength, xlab = "Tree length", col="lightcoral", main="Histogram of tree length (75%-complete dataset)")
+```
+
+```{r, echo = FALSE}
+d <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk_analysis/Robinson-Foulds_min-90-chunks.txt")
+hist(d[,2], xlab = "Robinson-Foulds distance", breaks=c(seq(min(d[,2]), max(d[,2]), by = 2)), col="mediumpurple", main="RF distance distribution across chunks (75%-complete dataset)")
+```
+
+#### Step 1 of filtering: remove trees of zero length
+
+No effect: the minimum observed tree length is non-zero and equal to:
+
+```{r, echo = FALSE}
+k <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk_analysis/comb-min-90-chunks")
+colnames(k) <- c("name", "root_to_tip_var", "treelength", "bipartition")
+min(k$treelength)
+```
+
+### Phase 4: get_good_genes
+
+In order of descending priority: bipartition support, root-to-tip variance, tree length
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk_analysis/comb-min-90-chunks --max 3 --order 3,1,2 --outf Min-90-chunk_analysis/gg-min-90-chunks-312
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk_analysis/gg-min-90-chunks-312"), sep = '\n')
+```
+
+```{r, echo=FALSE}
+chunks <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk_analysis/gg-min-90-chunks-312", stringsAsFactors = FALSE)
+distances <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk_analysis/Robinson-Foulds_min-90-chunks.txt", stringsAsFactors = FALSE)
+colnames(distances) <- c("chunk", "rf")
+best <- distances[distances$chunk == chunks[2,1],]
+secondbest <- distances[distances$chunk == chunks[3,1],]
+thirdbest <- distances[distances$chunk == chunks[4,1],]
+print("The Robinson-Foulds distances of the three best chunks from the reference tree are as follows:")
+best
+secondbest
+thirdbest
+```
+
+The chunk with the minimum RF distance from the reference tree:
+
+```{r, echo = FALSE}
+minimum <- distances[distances$rf == min(distances$rf),]
+print(minimum)
+```
+
+In order of descending priority: bipartition support, tree length, root-to-tip variance
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk_analysis/comb-min-90-chunks --max 3 --order 3,2,1 --outf Min-90-chunk_analysis/gg-min-90-chunks-321
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk_analysis/gg-min-90-chunks-321"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, tree length, bipartition support 
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk_analysis/comb-min-90-chunks --max 3 --order 1,2,3 --outf Min-90-chunk_analysis/gg-min-90-chunks-123
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk_analysis/gg-min-90-chunks-123"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, bipartition support, tree length
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk_analysis/comb-min-90-chunks --max 3 --order 1,3,2 --outf Min-90-chunk_analysis/gg-min-90-chunks-132
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk_analysis/gg-min-90-chunks-132"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk_analysis/comb-min-90-chunks --max 3 --order 2,1,3 --outf Min-90-chunk_analysis/gg-min-90-chunks-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk_analysis/gg-min-90-chunks-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk_analysis/comb-min-90-chunks --max 3 --order 2,3,1 --outf Min-90-chunk_analysis/gg-min-90-chunks-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk_analysis/gg-min-90-chunks-231"), sep = '\n')
+```
+
+## 50-bp chunks from the 90-locus dataset: SH-like of 75% or above
+
+The nodes with SH-like support values below 75% were collapsed using the script above. The corresponding FASTA files were copied into the resulting directory, and SortaDate was run as follows:
+
+### Phase 1: get_var_length
+
+```
+python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Chunks_75/ --flend .tre --outf Min-90-chunk75_analysis/var-min-90-chunks75 --outg alepisaurus_ferox,ceratoscopelus_warmingii
+```
+
+Running the script resulted in occasional segmentation faults as well as "this really only works with nexus or newick" warning messages. The resulting file had the full number of lines (4237: one for each tree), but some of them were blank and others contained NAs.
+
+### Phase 2: get_bp_genetrees
+
+```
+python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Chunks_75/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf Min-90-chunk75_analysis/bp-min-90-chunks75
+```
+
+### Phase 3: combine_results
+
+```
+python src/combine_results.py Min-90-chunk75_analysis/var-min-90-chunks75 Min-90-chunk75_analysis/bp-min-90-chunks75 --outf Min-90-chunk75_analysis/comb-min-90-chunks75
+```
+
+Delete the lines with NAs:
+
+```{r, eval = FALSE}
+comb90chunks75 <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk75_analysis/comb-min-90-chunks75", fill = TRUE)
+filtered <- na.omit(comb90chunks75)
+write.table(filtered,
+      "/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk75_analysis/comb-min-90-chunks75-filtered",
+      sep = "\t",
+      quote = FALSE,
+      row.names = FALSE,
+      col.names = FALSE)
+nrow(filtered)
+```
+
+The length of the filtered comb file is 3589 lines, meaning that SortaDate failed to obtain root-to-tip variance and/or tree length for 648 trees.
+
+```{r, echo=FALSE}
+g <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk75_analysis/comb-min-90-chunks75-filtered")
+colnames(g) <- c("name", "root_to_tip_var", "treelength", "bipartition")
+hist(g$bipartition, xlab = "Bipartition support", col="cornflowerblue", main="Histogram of bipartition support\n(SH-like > 0.75, 75%-complete dataset)")
+hist(g$root_to_tip_var, breaks = 5000, xlim = c(0,0.5), xlab = "Root-to-tip variance", col="greenyellow", main="Histogram of root-to-tip variance\n(SH-like > 0.75, 75%-complete dataset, excluding outliers)")
+hist(g$treelength, xlab = "Tree length", col="lightcoral", main="Histogram of tree length (SH-like > 0.75, 75%-complete dataset)")
+```
+
+```{r, echo = FALSE}
+d <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk75_analysis/Robinson-Foulds_min-90-chunks_75.txt")
+hist(d[,2], xlab = "Robinson-Foulds distance", breaks=c(seq(min(d[,2]), max(d[,2]), by = 2)), col="mediumpurple", main="RF distance distribution across chunks\n(SH-like > 0.75, 75%-complete dataset)")
+```
+
+#### Step 1 of filtering: remove trees of zero length
+
+No effect: the minimum observed tree length is non-zero and equal to:
+
+```{r, echo = FALSE}
+g <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk75_analysis/comb-min-90-chunks75-filtered")
+colnames(g) <- c("name", "root_to_tip_var", "treelength", "bipartition")
+min(g$treelength)
+```
+
+### Phase 4: get_good_genes
+
+In order of descending priority: bipartition support, root-to-tip variance, tree length
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk75_analysis/comb-min-90-chunks75-filtered --max 3 --order 3,1,2 --outf Min-90-chunk75_analysis/gg-min-90-chunks75-312
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk75_analysis/gg-min-90-chunks75-312"), sep = '\n')
+```
+
+```{r, echo=FALSE}
+chunks <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk75_analysis/gg-min-90-chunks75-312", stringsAsFactors = FALSE)
+distances <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk75_analysis/Robinson-Foulds_min-90-chunks_75.txt", stringsAsFactors = FALSE)
+colnames(distances) <- c("chunk", "rf")
+best <- distances[distances$chunk == chunks[2,1],]
+secondbest <- distances[distances$chunk == chunks[3,1],]
+thirdbest <- distances[distances$chunk == chunks[4,1],]
+print("The Robinson-Foulds distances of the three best chunks from the reference tree are as follows:")
+best
+secondbest
+thirdbest
+```
+
+The chunk with the minimum RF distance from the reference tree:
+
+```{r, echo = FALSE}
+minimum <- distances[distances$rf == min(distances$rf),]
+print(minimum)
+```
+
+In order of descending priority: bipartition support, tree length, root-to-tip variance
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk75_analysis/comb-min-90-chunks75-filtered --max 3 --order 3,2,1 --outf Min-90-chunk75_analysis/gg-min-90-chunks75-321
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk75_analysis/gg-min-90-chunks75-321"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, tree length, bipartition support 
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk75_analysis/comb-min-90-chunks75-filtered --max 3 --order 1,2,3 --outf Min-90-chunk75_analysis/gg-min-90-chunks75-123
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk75_analysis/gg-min-90-chunks75-123"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, bipartition support, tree length
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk75_analysis/comb-min-90-chunks75-filtered --max 3 --order 1,3,2 --outf Min-90-chunk75_analysis/gg-min-90-chunks75-132
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk75_analysis/gg-min-90-chunks75-132"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk75_analysis/comb-min-90-chunks75-filtered --max 3 --order 2,1,3 --outf Min-90-chunk75_analysis/gg-min-90-chunks75-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk75_analysis/gg-min-90-chunks75-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk75_analysis/comb-min-90-chunks75-filtered --max 3 --order 2,3,1 --outf Min-90-chunk75_analysis/gg-min-90-chunks75-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk75_analysis/gg-min-90-chunks75-231"), sep = '\n')
+```
+
+## 50-bp chunks from the 90-locus dataset: SH-like of 90% or above
+
+### Phase 1: get_var_length
+
+```
+python src/get_var_length.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Chunks_90/ --flend .tre --outf Min-90-chunk90_analysis/var-min-90-chunks90 --outg alepisaurus_ferox,ceratoscopelus_warmingii
+```
+
+As in the previous case, the command led to a number of segfaults and "this really only works with nexus or newick" warnings, corresponding to lines in the resulting file that were either incomplete or included NAs.
+
+### Phase 2: get_bp_genetrees
+
+```
+python src/get_bp_genetrees.py /Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Chunks_90/ /Users/David/Grive/Alfaro_Lab/Acanthomorpha/12_no_outgroups_scheme_3.tre --flend .tre --outf Min-90-chunk90_analysis/bp-min-90-chunks90
+```
+
+### Phase 3: combine_results
+
+```
+python src/combine_results.py Min-90-chunk90_analysis/var-min-90-chunks90 Min-90-chunk90_analysis/bp-min-90-chunks90 --outf Min-90-chunk90_analysis/comb-min-90-chunks90
+```
+
+Delete the lines with NAs:
+
+```{r, eval = FALSE}
+comb90chunks90 <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk90_analysis/comb-min-90-chunks90", fill = TRUE)
+filtered <- na.omit(comb90chunks90)
+write.table(filtered,
+      "/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk90_analysis/comb-min-90-chunks90-filtered",
+      sep = "\t",
+      quote = FALSE,
+      row.names = FALSE,
+      col.names = FALSE)
+nrow(filtered)
+```
+
+The length of the filtered comb file is 2319 lines, meaning that SortaDate failed to obtain root-to-tip variance and/or tree length for 1918 trees.
+
+```{r, echo=FALSE}
+h <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk90_analysis/comb-min-90-chunks90-filtered")
+colnames(h) <- c("name", "root_to_tip_var", "treelength", "bipartition")
+hist(h$bipartition, xlab = "Bipartition support", col="cornflowerblue", main="Histogram of bipartition support\n(SH-like > 0.9, 75%-complete dataset)")
+hist(h$root_to_tip_var, breaks = 5000, xlim = c(0,2), xlab = "Root-to-tip variance", col="greenyellow", main="Histogram of root-to-tip variance\n(SH-like > 0.9, 75%-complete dataset, excluding outliers)")
+hist(h$treelength, xlab = "Tree length", col="lightcoral", main="Histogram of tree length (SH-like > 0.9, 75%-complete dataset)")
+```
+
+```{r, echo = FALSE}
+d <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk90_analysis/Robinson-Foulds_min-90-chunks_90.txt")
+hist(d[,2], xlab = "Robinson-Foulds distance", breaks=c(seq(min(d[,2]), max(d[,2]), by = 2)), col="mediumpurple", main="RF distance distribution across chunks\n(SH-like > 0.9, 75%-complete dataset)")
+```
+
+#### Step 1 of filtering: remove trees of zero length
+
+No effect: the minimum observed tree length is non-zero and equal to:
+
+```{r, echo = FALSE}
+h <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk90_analysis/comb-min-90-chunks90-filtered")
+colnames(h) <- c("name", "root_to_tip_var", "treelength", "bipartition")
+min(h$treelength)
+```
+
+### Phase 4: get_good_genes
+
+In order of descending priority: bipartition support, root-to-tip variance, tree length
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk90_analysis/comb-min-90-chunks90-filtered --max 3 --order 3,1,2 --outf Min-90-chunk90_analysis/gg-min-90-chunks90-312
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk90_analysis/gg-min-90-chunks90-312"), sep = '\n')
+```
+
+```{r, echo=FALSE}
+chunks <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk90_analysis/gg-min-90-chunks90-312", stringsAsFactors = FALSE)
+distances <- read.table("/Users/David/Grive/Alfaro_Lab/SortaDate/Min-90-chunk90_analysis/Robinson-Foulds_min-90-chunks_90.txt", stringsAsFactors = FALSE)
+colnames(distances) <- c("chunk", "rf")
+best <- distances[distances$chunk == chunks[2,1],]
+secondbest <- distances[distances$chunk == chunks[3,1],]
+thirdbest <- distances[distances$chunk == chunks[4,1],]
+print("The Robinson-Foulds distances of the three best chunks from the reference tree are as follows:")
+best
+secondbest
+thirdbest
+```
+
+The chunk with the minimum RF distance from the reference tree:
+
+```{r, echo = FALSE}
+minimum <- distances[distances$rf == min(distances$rf),]
+print(minimum)
+```
+
+In order of descending priority: bipartition support, tree length, root-to-tip variance
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk90_analysis/comb-min-90-chunks90-filtered --max 3 --order 3,2,1 --outf Min-90-chunk90_analysis/gg-min-90-chunks90-321
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk90_analysis/gg-min-90-chunks90-321"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, tree length, bipartition support 
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk90_analysis/comb-min-90-chunks90-filtered --max 3 --order 1,2,3 --outf Min-90-chunk90_analysis/gg-min-90-chunks90-123
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk90_analysis/gg-min-90-chunks90-123"), sep = '\n')
+```
+
+In order of descending priority: root-to-tip variance, bipartition support, tree length
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk90_analysis/comb-min-90-chunks90-filtered --max 3 --order 1,3,2 --outf Min-90-chunk90_analysis/gg-min-90-chunks90-132
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk90_analysis/gg-min-90-chunks90-132"), sep = '\n')
+```
+
+In order of descending priority: tree length, root-to-tip variance, bipartition support
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk90_analysis/comb-min-90-chunks90-filtered --max 3 --order 2,1,3 --outf Min-90-chunk90_analysis/gg-min-90-chunks90-213
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk90_analysis/gg-min-90-chunks90-213"), sep = '\n')
+```
+
+In order of descending priority: tree length, bipartition support, root-to-tip variance
+
+```{r, echo = FALSE, eval = FALSE}
+python src/get_good_genes.py Min-90-chunk90_analysis/comb-min-90-chunks90-filtered --max 3 --order 2,3,1 --outf Min-90-chunk90_analysis/gg-min-90-chunks90-231
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("Min-90-chunk90_analysis/gg-min-90-chunks90-231"), sep = '\n')
 ```
