@@ -1174,67 +1174,67 @@ cat(readLines("Chunk90_analysis/gg-chunks90-231"), sep = '\n')
 A bash script used to split the UCE loci into 50-bp chunks was identical to that used above, with the exception of step 3 (joining all taxa represented by a given chunk into a new FASTA file), for which the following code was used:
 
 ```{r, eval = FALSE}
-    library(dplyr)
+library(dplyr)
 
-    # Alternating rows (name, sequence, name, sequence) go to two different columns, so that
-    # each sequence is correctly assigned to its respective taxon:
+# Alternating rows (name, sequence, name, sequence) go to two different columns, so that
+# each sequence is correctly assigned to its respective taxon:
 
-    split_seqs <- read.table("split.txt")
-    odd <- as.vector(split_seqs[seq(1, nrow(split_seqs), 2), ])
-    even <- as.vector(split_seqs[seq(2, nrow(split_seqs), 2), ])
-    odd_name <- "taxon"
-    even_name <- "sequence"
-    split_seqs_new <- data.frame(odd, even)
-    names(split_seqs_new) <- c(odd_name, even_name)
+split_seqs <- read.table("split.txt")
+odd <- as.vector(split_seqs[seq(1, nrow(split_seqs), 2), ])
+even <- as.vector(split_seqs[seq(2, nrow(split_seqs), 2), ])
+odd_name <- "taxon"
+even_name <- "sequence"
+split_seqs_new <- data.frame(odd, even)
+names(split_seqs_new) <- c(odd_name, even_name)
 
-    # Determine how long the locus is (i.e., how many 50-bp chunks it has been split into).
-    # This can be done by counting the number of occurrences of a single taxon name. 
-    # In principle, any name could be used, but since no taxon appears to be common to all
-    # the loci, the code below grabs the first taxon name appearing in the fasta file and
-    # counts its occurrences.
+# Determine how long the locus is (i.e., how many 50-bp chunks it has been split into).
+# This can be done by counting the number of occurrences of a single taxon name. 
+# In principle, any name could be used, but since no taxon appears to be common to all
+# the loci, the code below grabs the first taxon name appearing in the fasta file and
+# counts its occurrences.
 
-    m <- paste(sapply(strsplit(as.character(split_seqs_new[1,1]), split="_", fixed=TRUE),
-                      function(x) (x[1])), 
-              "_", sapply(strsplit(as.character(split_seqs_new[1,1]), split="_", fixed=TRUE),                                function(x) (x[2])),
-                   sep = "")
-    n <- length(unique(grep(m, split_seqs_new[,1], value = TRUE)))
+m <- paste(sapply(strsplit(as.character(split_seqs_new[1,1]), split="_", fixed=TRUE),
+                  function(x) (x[1])), 
+           "_", sapply(strsplit(as.character(split_seqs_new[1,1]), split="_", fixed=TRUE),                         function(x) (x[2])),
+           sep = "")
+n <- length(unique(grep(m, split_seqs_new[,1], value = TRUE)))
 
-    # Create a vector of strings that can filter taxon names according to the base pair range
-    # tag attached to their end
+# Create a vector of strings that can filter taxon names according to the base pair range
+# tag attached to their end
 
-    chunks <- vector()
-    for(i in 0:(n-1)) {
-      chunks <- append(chunks, paste("_", i*50, "bp", sep = ""))
-    }
+chunks <- vector()
+for(i in 0:(n-1)) {
+  chunks <- append(chunks, paste("_", i*50, "bp", sep = ""))
+}
 
-    # Create a list of data frames. Each element of the list represents a base pair range
-    # and consists of a data frame containing both the "taxon" and "sequence" columns of
-    # split_seqs_new
+# Create a list of data frames. Each element of the list represents a base pair range
+# and consists of a data frame containing both the "taxon" and "sequence" columns of
+# split_seqs_new
 
-    partition <- list()
-    for(i in 1:length(chunks)) {
-      partition[[i]] <- data.frame(filter(split_seqs_new, 
-                                          grepl(as.character(chunks[i]), taxon)))
-    }
+partition <- list()
+for(i in 1:length(chunks)) {
+partition[[i]] <- data.frame(filter(split_seqs_new, 
+                                    grepl(as.character(chunks[i]), taxon)))
+}
 
-    # Create a matrix whose columns represents individual chunks (i.e., base pair ranges)
-    # and whose rows have the structure of the original split_seqs data frame -- i.e., name,
-    # sequence, name, sequence:
+# Create a matrix whose columns represents individual chunks (i.e., base pair ranges)
+# and whose rows have the structure of the original split_seqs data frame -- i.e., name,
+# sequence, name, sequence:
 
-    chunkmatrix <- matrix(ncol = length(partition), 
-                          nrow = 2*(nrow(split_seqs_new)/length(partition)))
-    for(i in 1:length(partition)) {
-      for(j in 1:nrow(partition[[i]])) {
-        chunkmatrix[(2*j - 1), i] <- as.character(partition[[i]][j, "taxon"])
-        chunkmatrix[2*j, i] <- as.character(partition[[i]][j, "sequence"])
-      }
-    }
+chunkmatrix <- matrix(ncol = length(partition), 
+                      nrow = 2*(nrow(split_seqs_new)/length(partition)))
+for(i in 1:length(partition)) {
+  for(j in 1:nrow(partition[[i]])) {
+    chunkmatrix[(2*j - 1), i] <- as.character(partition[[i]][j, "taxon"])
+    chunkmatrix[2*j, i] <- as.character(partition[[i]][j, "sequence"])
+  }
+}
 
-    # Print the resulting fasta files!
+# Print the resulting fasta files!
 
-    for(i in 1:ncol(chunkmatrix)) {
-      write(chunkmatrix[,i], paste("chunk_", i, ".fasta", sep = ""))
-    }
+for(i in 1:ncol(chunkmatrix)) {
+  write(chunkmatrix[,i], paste("chunk_", i, ".fasta", sep = ""))
+}
 ```
 
 The taxon names in the chunk FASTA files were then stripped of the chunk-indicating suffixes so as to correspond with the names used in the reference tree, and a script was used to analyze all the chunks using RAxML. The resulting trees were then copied into the directory containing the chunks. Out of 6543 chunk FASTA files, only 4237 had tree files associated with them, suggesting that RAxML failed to infer a tree for a given chunk in approx. 35% of cases.
@@ -1890,7 +1890,7 @@ plot(SH90filt4$root_to_tip_var, SH90filt4$treelength, xlab = "Root-to-tip varian
 
 Out of the 66 chunks selected from the SH-like > 0.9 dataset, 65 were 50-bp long. To facilitate PartitionFinder searches, these chunks were aligned first using SequenceMatrix v1.8, with the last (47-bp) chunk attached to the resulting alignment afterwards. This made it easier to automate the calculation of base pair ranges for each locus (the latter needed to be included in the PartitionFinder configuration file). The outgroups (*Alepisaurus ferox* and *Ceratoscopelus warmingii*) were excluded from the concatenated alignment, as they were not present in the available topology constraint.
 
-PartitionFinder found 8 subsets of the following properties:
+PartitionFinder was first run with the "rcluster" search option. Although the "models" option was set to "all", since rcluster searches can only be performed in RAxML, this effectively limited the analysis to the three models implemented in the latter software (GTR, GTR+$\Gamma$, GTR+$\Gamma$+I). This run yielded 8 subsets of the following properties:
 
 Subset | Best Model | Sites | Rate under GTR+$\Gamma$ | ID                     
 -------|------------|-------|-------------------------|---------------------------------
@@ -1909,3 +1909,139 @@ scalers <- c(1.048826, 0.672610, 0.281570, 0.965800, 2.278670, 1.682760, 2.73983
 sitesnrates <- data.frame(sites, scalers)
 plot(sitesnrates$sites, sitesnrates$scalers, xlab = "Number of sites in partition", ylab = "Branch length scaler", main = "Concatenated chunk partitions: sites vs. rates")
 ```
+
+In the next step, the alignment was analyzed under the "greedy" search option, with the BEAST model set and without the "--raxml" flag. This search recovered the following 14 partitions:
+
+Subset | Best Model | Sites | Tree size under the best model | ID
+-------|------------|-------|--------------------------------|---
+1      | HKY+$\Gamma$+X    | 100   | 6.07552                        | 3f353939a600a6973a6a1e0608925da6 
+2      | TRNEF+$\Gamma$    | 200   | 4.34326                        | ceefdb63d1de1122404ab11285f05f27 
+3      | JC+$\Gamma$       | 50    | 2.80253                        | ac2a21040350ec54b4664bc752a13a45 
+4      | TRNEF+$\Gamma$    | 300   | 1.53147                        | baed377a41689244a752bc9e3169c975 
+5      | GTR+I+$\Gamma$+X  | 350   | 3.44224                        | ce05da9c4ae84b4a74cb468b18fcda82 
+6      | K80+I+$\Gamma$    | 450   | 3.71596                        | 16b9f71868c90950d0dd144fd5de511f 
+7      | SYM+$\Gamma$      | 300   | 8.15389                        | c5076d62640bd9eeabe53de6e5bf7f7a 
+8      | K80+$\Gamma$      | 150   | 9.20524                        | d5aeca1d1fad19fc89dbb336bad98cbd 
+9      | K80+$\Gamma$      | 497   | 5.13898                        | e7f992b256534832ccdb46c09aa6e9a4 
+10     | HKY+$\Gamma$+X    | 300   | 2.87180                        | 4e722846245f8cd6600c32f3131120a6 
+11     | TRNEF+$\Gamma$    | 250   | 5.87708                        | 72ad9849e1f3be2cbffa1097935e00fc 
+12     | GTR+I+$\Gamma$+X  | 50    | 36.99851                       | 2d0d981211d9b6e3f364c1fcd221b555 
+13     | JC+$\Gamma$       | 150   | 1.20339                        | d687ea29d8ab88ed27334eafc8164ec8 
+14     | TRNEF+$\Gamma$    | 150   | 13.44953                       | 00f862e3cabdf1be1b99bc5b1455ba78
+
+(In PhyML, "tree size" denotes the sum of edge lengths: see http://github.com/stephaneguindon/phyml/blob/master/doc/phyml-manual.tex. "X" denotes estimated, as opposed to empirical, base frequencies.)
+
+```{r, echo = FALSE}
+sites2 <- c(100, 200, 50, 300, 350, 450, 300, 150, 497, 300, 250, 50, 150, 150)
+scalers2 <- c(6.07552, 4.34326, 2.80253, 1.53147, 3.44224, 3.71596, 8.15389, 9.20524, 5.13898, 2.87180, 5.87708, 36.99851, 1.20339, 13.44953)
+sitesnrates2 <- data.frame(sites2, scalers2)
+plot(sitesnrates2$sites2, sitesnrates2$scalers2, xlab = "Number of sites in partition", ylab = "Sum of branch lengths", main = "Concatenated chunk partitions: sites vs. tree length")
+```
+
+#### BEAST analysis
+
+The two 50-bp partitions were removed. Each partition received its own substitution model, which was generally identical to that selected by PartitionFinder, except for those models that contained the I parameter (proportion of invariant sites). Since this parameter and $\Gamma$ account for the same phenomenon (rate heterogeneity across sites), their simultaneous inclusion causes the resulting model to be non-identifiable, leading to potential mixing problems in MCMC simulations. The models that were not directly available in BEAUTi were implemented as follows:
+
+- TrNef: TN93 + equal base frequencies
+- K80: HKY85 + equal base frequencies
+- SYM: GTR + equal base frequencies
+
+Each $\Gamma$ rate heterogeneity distribution was discretized into 4 categories. The default improper prior on the relative rates (the `allMus` parameter) was set to a gamma distribution with a shape of 0.001 and a scale of 1000 following the recommendations at https://www.biostat.washington.edu/sites/default/files/modules//2016_SISMID_13_11.pdf. All the priors on substitution model parameters were kept at their default values. 
+
+In contrast to the substitution models, the parameters of the uncorrelated lognormal clock model were linked across partitions. The `ucld.mean` hyperparameter was assigned a lognormal hyperprior with a mean of 0.005 (in real space) and a log standard deviation of 1, with the initial value set equal to 0.005. A truncated exponential hyperprior with support (0, 1), a mean of 0.3, and an initial value of 0.1 was used for `ucld.stdev`.
+
+The "fixed tree topology" operator mix was used (based on a user-supplied topology common to all partitions), with the tuning of the `ucld.mean` and `ucld.stdev` operators set to 0.9 (default value = 0.75) and their weight doubled (from 3.0 to 6.0). Default tuning values and weights were used for all the remaining operators.
+
+The 12 internal calibrations were all implemented as exponentials, and the (*Polymixia* + *Aphredoderus*) received the corrected calibration whose 95th percentile was equal to 116.35 Ma. A truncated exponential distribution supported on (98 Ma, 143 Ma) was constructed to calibrate the root of the tree, with its mean equal to the midpoint of the support interval (22.5 without the offset).
+
+Finally, the MCMC simulation was run for 500 million generations, with a sampling period of 1000 generations.
+
+```
+beast -threads 12 -beagle_SSE concatchunks.xml
+```
+
+#### MCMCTree analysis
+
+In PAML, subsets of a concatenated alignment cannot be simply ignored as in BEAST but must be removed from the file, so that the sum of partition lengths equals the total number of nucleotides (PAML manual: p. 13). Moreover, the sites that make up a partition must be adjacent in the alignment. Therefore, the following information from the `best_scheme` file generated by PartitionFinder was used to generate a PAML-compatible alignment:
+
+```
+1 locus42, locus1
+2 locus57, locus3, locus25, locus2
+3 locus4
+4 locus61, locus5, locus55, locus63, locus23, locus47
+5 locus16, locus54, locus45, locus31, locus7, locus64, locus6
+6 locus15, locus24, locus8, locus11, locus53, locus52, locus51, locus20, locus26
+7 locus14, locus17, locus9, locus27, locus22, locus28
+8 locus10, locus21, locus13
+9 locus62, locus37, locus59, locus29, locus12, locus58, locus46, locus66, locus44, locus18
+10 locus40, locus39, locus49, locus19, locus32, locus38
+11 locus35, locus60, locus33, locus43, locus30
+12 locus34
+13 locus36, locus48, locus65
+14 locus56, locus50, locus41
+```
+
+1. Using bash, replace whitespaces between each taxon name and the corresponding sequence with line breaks:
+
+    ```
+    xargs -n 1 < concat.phy > concat2.phy
+    ```
+
+2. Manually remove the first line indicating the number of taxa and sites. 
+
+3. Now, use the structure of the new file (with names and sequences in alternating rows) to reorganize the chunks:
+
+    ```{r, eval = FALSE}
+    concat <- read.table("/Users/David/Downloads/concat2.phy", stringsAsFactors = FALSE)
+
+    # Random check, part 1: print "locus 42" (sites 2051--2100) of the first taxon:
+    substring(concat[2,], 2051, 2100)
+
+    for(i in seq(2, nrow(concat), by = 2)) {
+      chunks <- substring(concat[i,], seq(1, 3250, 50), seq(50, 3250, 50))
+      chunks[66] <- substring(concat[i,], 3251, 3297)
+      ch1 <- paste(chunks[42], chunks[1], sep = "")
+      ch2 <- paste(chunks[57], chunks[3], chunks[25], chunks[2], sep = "")
+      ch3 <- paste(chunks[61], chunks[5], chunks[55], chunks[63], chunks[23], chunks[47], sep = "")
+      ch4 <- paste(chunks[16], chunks[54], chunks[45], chunks[31], chunks[7], chunks[64], chunks[6], sep = "")
+      ch5 <- paste(chunks[15], chunks[24], chunks[8], chunks[11], chunks[53], chunks[52], chunks[51], chunks[20], chunks[26], sep = "")
+      ch6 <- paste(chunks[14], chunks[17], chunks[9], chunks[27], chunks[22], chunks[28], sep = "")
+      ch7 <- paste(chunks[10], chunks[21], chunks[13], sep = "")
+      ch8 <- paste(chunks[62], chunks[37], chunks[59], chunks[29], chunks[12], chunks[58], chunks[46], chunks[66], chunks[44], chunks[18], sep = "")
+      ch9 <- paste(chunks[40], chunks[39], chunks[49], chunks[19], chunks[32], chunks[38], sep = "")
+      ch10 <- paste(chunks[35], chunks[60], chunks[33], chunks[43], chunks[30], sep = "")
+      ch11 <- paste(chunks[36], chunks[48], chunks[65], sep = "")
+      ch12 <- paste(chunks[56], chunks[50], chunks[41], sep = "")
+      concat[i,] <- paste(ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8, ch9, ch10, ch11, ch12, sep = "")
+    }
+
+    # Make sure that the new sequence rows have the desired length:
+    for(i in seq(2, nrow(concat), by = 2)) {
+      print(nchar(concat[i,]))
+    }
+
+    # Random check, part 2: "locus 42" should now correspond to sites 1--50. Does it?
+    substring(concat[2,], 1, 50)
+
+    # Yes! Now print the new alignment into a table:
+    write.table(concat,
+      "/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/pamlconcat.phy",
+      quote = FALSE,
+      row.names = FALSE,
+      col.names = FALSE)
+    ```
+
+4. Add the following two lines to the beginning of the file:
+
+    ```
+    118 3197 G
+    G 12 100 200 300 350 450 300 150 497 300 250 150 150
+    ```
+
+Unlike BEAST, PAML cannot assign a separate substitution model to each partition, but it is capable of unlinking substitution model parameters across partitions (Warnock et al. 2014: ESM p. 2). Since moderate substitution model overparameterization usually does not pose a problem to Bayesian phylogenetic analyses (Ronquist & Deans 2010), each partition was assigned its own GTR+$\Gamma$ ("REV") model. Note that the unlinking of substitution models necessitates the use of empirical (`nhomo = 0`) rather than estimated base frequencies. Relative rate, equilibrium frequency, and alpha parameters were unlinked across partitions, but branch lengths were kept linked (options `Mgene = 4` and `Malpha = 1`). To facilitate cross-platform comparisons, the root calibration was set to 120.5 Ma (same as the mean of the root prior used in BEAST) in baseml to calculate substitution rates.
+
+# Refs:
+
+Ronquist F, Deans AR 2010 Bayesian phylogenetics and its influence on insect systematics. Annu Rev Entomol 55: 189--206.
+
+Warnock RCM, Parham JF, Joyce WG, Lyson TR, Donoghue PCJ 2014 Calibration uncertainty in molecular dating analyses: there is no substitute for the prior evaluation of time priors. Proc R Soc B 282(1798): 20141013
