@@ -2040,8 +2040,104 @@ In PAML, subsets of a concatenated alignment cannot be simply ignored as in BEAS
 
 Unlike BEAST, PAML cannot assign a separate substitution model to each partition, but it is capable of unlinking substitution model parameters across partitions (Warnock et al. 2014: ESM p. 2). Since moderate substitution model overparameterization usually does not pose a problem to Bayesian phylogenetic analyses (Ronquist & Deans 2010), each partition was assigned its own GTR+$\Gamma$ ("REV") model. Note that the unlinking of substitution models necessitates the use of empirical (`nhomo = 0`) rather than estimated base frequencies. Relative rate, equilibrium frequency, and alpha parameters were unlinked across partitions, but branch lengths were kept linked (options `Mgene = 4` and `Malpha = 1`). To facilitate cross-platform comparisons, the root calibration was set to 120.5 Ma (same as the mean of the root prior used in BEAST) in baseml to calculate substitution rates.
 
+The substitution rate estimation finished up in 5:46:48 and yielded the following values:
+
+Partition | Rate (subst. per 100 million years)
+----------|------------------------------------
+Gene 1    | 0.126608
+Gene 2    | 0.087695
+Gene 3    | 0.033200
+Gene 4    | 0.072678
+Gene 5    | 0.072362
+Gene 6    | 0.158487
+Gene 7    | 0.188372
+Gene 8    | 0.107932
+Gene 9    | 0.060550
+Gene 10   | 0.111402
+Gene 11   | 0.026772
+Gene 12   | 0.184536
+
+For MCMCTree, the G option cannot be used, and the partitions must be given as multiple alignments one after another in a single file (http://groups.google.com/forum/#!topic/pamlsoftware/cC7mOgZnNiY). Such a file was compiled as follows:
+
+1. Run the following code:
+
+    ```{r, eval = FALSE}
+    concat <- read.table("/Users/David/Downloads/concat2.phy", stringsAsFactors = FALSE)
+    
+    alignments <- matrix(nrow = 12*(nrow(concat) + 2), ncol = 1)
+    for(i in 1:(nrow(concat)/2)) {
+    	for(j in 0:11) {
+    		alignments[(2*i-1) + j*(nrow(concat) + 2), ] <- concat[(2*i-1),]
+    	}
+      chunks <- substring(concat[2*i,], seq(1, 3250, 50), seq(50, 3250, 50))
+      chunks[66] <- substring(concat[2*i,], 3251, 3297)
+      alignments[2*i,] <- paste(chunks[42], chunks[1], sep = "")
+      alignments[2*i + 1*(nrow(concat) + 2),] <- paste(chunks[57], chunks[3], chunks[25], chunks[2], sep = "")
+      alignments[2*i + 2*(nrow(concat) + 2),] <- paste(chunks[61], chunks[5], chunks[55], chunks[63], chunks[23], chunks[47], sep = "")
+      alignments[2*i + 3*(nrow(concat) + 2),] <- paste(chunks[16], chunks[54], chunks[45], chunks[31], chunks[7], chunks[64], chunks[6], sep = "")
+      alignments[2*i + 4*(nrow(concat) + 2),] <- paste(chunks[15], chunks[24], chunks[8], chunks[11], chunks[53], chunks[52], chunks[51], chunks[20], chunks[26], sep = "")
+      alignments[2*i + 5*(nrow(concat) + 2),] <- paste(chunks[14], chunks[17], chunks[9], chunks[27], chunks[22], chunks[28], sep = "")
+      alignments[2*i + 6*(nrow(concat) + 2),] <- paste(chunks[10], chunks[21], chunks[13], sep = "")
+      alignments[2*i + 7*(nrow(concat) + 2),] <- paste(chunks[62], chunks[37], chunks[59], chunks[29], chunks[12], chunks[58], chunks[46], chunks[66], chunks[44], chunks[18], sep = "")
+      alignments[2*i + 8*(nrow(concat) + 2),] <- paste(chunks[40], chunks[39], chunks[49], chunks[19], chunks[32], chunks[38], sep = "")
+      alignments[2*i + 9*(nrow(concat) + 2),] <- paste(chunks[35], chunks[60], chunks[33], chunks[43], chunks[30], sep = "")
+      alignments[2*i + 10*(nrow(concat) + 2),] <- paste(chunks[36], chunks[48], chunks[65], sep = "")
+      alignments[2*i + 11*(nrow(concat) + 2),] <- paste(chunks[56], chunks[50], chunks[41], sep = "")
+    }
+    write.table(alignments, "/Users/David/Downloads/pamlconcatpartitioned.phy", quote = FALSE, row.names = FALSE, col.names = FALSE, na = "")
+    ```
+
+2. Manually add the information about the number of taxa and sites in each partition.
+
+To obtain a single estimate that could be used for the gamma-Dirichlet hyperprior on rates (`rgene_gamma`), a weighted average of these values was computed, with each rate weighted by the length of the corresponding partition:
+
+```{r, echo = FALSE}
+(100*0.126608 + 200*0.087695 + 300*0.033200 + 350*0.072678 + 450*0.072362 + 300*0.158487 + 150*0.188372 + 497*0.107932 + 300*0.060550 + 250*0.111402 + 150*0.026772 + 150*0.184536)/3197
+```
+
+The shape parameter of the gamma-Dirichlet distribution ($\alpha$) was set to 2 and the rate parameter ($\beta$) was chosen so that the mean (calculated as $\frac{\alpha}{\beta}$) was equal to the rate above (expressed as the number of substitutions per 10 million years):
+
+```{r, echo = FALSE}
+20 / 0.09550072
+```
+
+The hyperprior on the mean of the rate distribution is distributed as follows:
+
+```{r, echo=FALSE}
+curve(dgamma(x, 2, 209.42), from=0, to=0.1, 
+      main = "Prior on the mean of the rate distribution", xlab = "Mean value", ylab = "Probability density")
+```
+
+The mean of the gamma hyperprior on the variance of the log rate was set to 0.1 by setting $\alpha$ equal to 1 and $\beta$ equal to 10. This corresponds closely to the mean of the `ucld.stdev` hyperprior in BEAST (0.3 -- note that while BEAST places the prior on the standard deviation of the rate distribution, MCMCTree assigns the prior to the variance, or the square of the standard deviation).
+
+The lognormal distribution of rates is plotted below, with the mean and variance (in log-space) set equal to the means of the respective hyperpriors:
+
+```{r, echo = FALSE}
+curve(dlnorm(x, meanlog = log(2/209.42), sdlog = sqrt(1/10)), from=0, to=0.1, 
+      main = "Relaxed clock rate distribution", xlab = "Substitutions per site per 10 million years", ylab = "Probability density")
+```
+
+Finally, since there are multiple loci, the Dirichlet concentration parameter $\alpha_D$ was specified and set to the default value of 1, which is described as producing "a reasonable partitioning" in the MCMCTree manual.
+
+The full configuration file is shown below:
+
+```{r comment='', echo = FALSE}
+cat(readLines("/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Chunks/chunkmcmctree.ctl"), sep = '\n')
+```
+
+The initial analyses (run under the `usedata = 3` option to calculate the Hessian matrices for the branch lengths) produced the following warning messages:
+
+```
+xmax = 0.0000e+00 close to zero at 226!
+xmax = 0.0000e+00 close to zero at 225!
+xmax = 0.0000e+00 close to zero at 223!
+xmax = 0.0000e+00 close to zero at 224!
+```
+
+However, these did not cause baseml to crash, and the Hessian matrices were successfully written into `out.BV` files. Therefore, the `usedata` variable was set to 2, the `out.BV` files were moved to `in.BV`, and four separate MCMC chains with a length of 75 million generations (as specified in the configuration file above) were started.
+
 # Refs:
 
-Ronquist F, Deans AR 2010 Bayesian phylogenetics and its influence on insect systematics. Annu Rev Entomol 55: 189--206.
+Ronquist F, Deans AR 2010 Bayesian phylogenetics and its influence on insect systematics. Annu Rev Entomol 55: 189--206
 
 Warnock RCM, Parham JF, Joyce WG, Lyson TR, Donoghue PCJ 2014 Calibration uncertainty in molecular dating analyses: there is no substitute for the prior evaluation of time priors. Proc R Soc B 282(1798): 20141013
