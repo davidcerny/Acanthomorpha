@@ -1938,7 +1938,7 @@ sitesnrates2 <- data.frame(sites2, scalers2)
 plot(sitesnrates2$sites2, sitesnrates2$scalers2, xlab = "Number of sites in partition", ylab = "Sum of branch lengths", main = "Concatenated chunk partitions: sites vs. tree length")
 ```
 
-#### BEAST analysis
+### BEAST analysis
 
 The two 50-bp partitions were removed. Each partition received its own substitution model, which was generally identical to that selected by PartitionFinder, except for those models that contained the I parameter (proportion of invariant sites). Since this parameter and $\Gamma$ account for the same phenomenon (rate heterogeneity across sites), their simultaneous inclusion causes the resulting model to be non-identifiable, leading to potential mixing problems in MCMC simulations. The models that were not directly available in BEAUTi were implemented as follows:
 
@@ -1958,16 +1958,6 @@ Finally, the MCMC simulation was run for 500 million generations, with a samplin
 
 ```
 beast -threads 12 -beagle_SSE concatchunks.xml
-```
-
-Two more analyses were performed using BEAST; their settings were identical to those described above except for the clock model used. In both cases, a random local clock model was utilized, with one analysis using the uncorrelated version of the model (with the `ratesAreMultipliers` option in the XML file set to the default value of `"false"`) and the other employing the correlated version (`ratesAreMultipliers="true"`). In both analyses, default priors were placed on the parameters of the clock model.
-
-```
-beast -threads 6 -beagle_SSE concatchunks-urlc.xml
-```
-
-```
-beast -threads 6 -beagle_SSE concatchunks-crlc.xml
 ```
 
 The analysis finished after 12.597 days and the resulting log file was examined using LogAnalyser to determine the EES value of each parameter:
@@ -1995,7 +1985,196 @@ java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.TreeAnn
 
 ![Comparison with the MCMCTree-generated tree from the manuscript](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/BEAST-manuscript-tree-comparison.png)
 
-#### MCMCTree analysis
+#### BEAST: Random local clocks
+
+Two more analyses were performed using BEAST; their settings were identical to those described above except for the clock model used. In both cases, a random local clock model was utilized, with one analysis using the uncorrelated version of the model (with the `ratesAreMultipliers` option in the XML file set to the default value of `"false"`) and the other employing the correlated version (`ratesAreMultipliers="true"`). In both analyses, default priors were placed on the parameters of the clock model.
+
+```
+beast -threads 6 -beagle_SSE concatchunks-urlc.xml
+```
+
+```
+beast -threads 6 -beagle_SSE concatchunks-crlc.xml
+```
+
+**(Note: these chains did not reach the target length due to a power outage.)**
+
+#### BEAST: Extended calibration set
+
+Another analysis was started with settings identical to the first one (in particular, with the uncorrelated lognormal relaxed clock model), but with the extended dataset of 28 calibrations:
+
+```
+/home/linuxbrew/.linuxbrew/bin/beast -beagle_SSE -beagle_scaling dynamic concatchunks-ext.xml
+```
+
+This run finished after 7.059 days, with the following effective sample sizes for individual parameters (as determined by LogAnalyser):
+
+```{r comment='', echo = FALSE, message=F, warning=F, eval = FALSE}
+# Operator analysis results:
+cat(readLines("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/concatchunks-ext-operators.txt"), sep = '\n')
+```
+
+```
+/home/linuxbrew/.linuxbrew/bin/loganalyser -burnin 50000000 -ess concatchunks-ext.log
+```
+
+```{r, echo=FALSE}
+options(scipen=999)
+chunkextess <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/concatchunks-ext1-LogAnalyser-output.txt", header=TRUE)
+chunkextess[,c(1,4,7)]
+```
+
+Since four parameters had ESS values of less than 200 (`tmrca(Archaeotetraodon)`, `tmrca(Cretzeus)`, `ucld.mean`, `coefficientOfVariation`), a new run was started with identical settings and the chain length set to 250 million generations:
+
+```
+/home/linuxbrew/.linuxbrew/bin/beast -beagle_SSE -beagle_scaling dynamic concatchunks-ext2.xml
+```
+
+The second run finished after 4.384 days.
+
+```{r comment='', echo = FALSE, message=F, warning=F, eval = FALSE}
+# Operator analysis results:
+cat(readLines("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/concatchunks-ext2-operators.txt"), sep = '\n')
+```
+
+The next steps were as follows:
+
+1. Remove the first 10% of samples as burnin from both chains to produce truncated log files:
+
+    ```
+    /home/linuxbrew/.linuxbrew/bin/logcombiner -burnin 50000001 concatchunks-ext.log concatchunks-ext-no-burnin.log
+    /home/linuxbrew/.linuxbrew/bin/logcombiner -burnin 25000001 concatchunks-ext2.log concatchunks-ext2-no-burnin.log
+    ```
+    
+2. Combine the truncated log files:
+
+    ```
+    /home/linuxbrew/.linuxbrew/bin/logcombiner -burnin 0 concatchunks-ext-no-burnin.log concatchunks-ext2-no-burnin.log concatchunks-ext-combined.log
+    ```
+
+3. Analyze the combined log file to assess ESS values:
+
+    ```
+    /home/linuxbrew/.linuxbrew/bin/loganalyser -burnin 0 -ess concatchunks-ext-combined.log
+    ```
+    
+Although the ESS values for the 4 previously problematic parameters all exceeded 200 when the two runs were combined, the ESS value of one more parameter (`tmrca(Tarkus)`)unexpectedly dropped below the threshold:
+
+```{r, echo=FALSE}
+options(scipen=999)
+chunkextess <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/concatchunks-ext-combined-LogAnalyser-output.txt", header=TRUE)
+chunkextess[,c(1,4,7)]
+```
+
+To assess whether this reflects a more general problem with convergence, maximum clade credibility trees were constructed for both the first run alone (18,000 samples excluding burnin) and the combined run (27,000 samples excluding burnin) and compared to each other:
+
+```
+/home/linuxbrew/.linuxbrew/bin/treeannotator -burnin 50000000 -heights median concatchunks-ext.trees chunks-ext-run1.tre
+/home/linuxbrew/.linuxbrew/bin/logcombiner -trees -burnin 50000001 concatchunks-ext.trees concatchunks-ext-no-burnin.trees
+/home/linuxbrew/.linuxbrew/bin/logcombiner -trees -burnin 25000001 concatchunks-ext2.trees concatchunks-ext2-no-burnin.trees
+/home/linuxbrew/.linuxbrew/bin/logcombiner -trees -burnin 0 concatchunks-ext-no-burnin.trees concatchunks-ext2-no-burnin.trees concatchunks-ext-combined.trees
+/home/linuxbrew/.linuxbrew/bin/treeannotator -burnin 0 -heights median concatchunks-ext-combined.trees chunks-ext-combined.tre
+```
+
+As can be seen, the ages are nearly identical:
+
+![BEAST under the extended calibration set: first run only vs. combined run](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/beast-ext_first-vs-combined-run.png)
+
+![Comparison of the BEAST analyses under the uncorrelated lognormal clock and 12/28 calibrations with the manuscript tree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/BEAST-uncorr-12-vs-28.png)
+
+#### BEAST: Fixed local clocks
+
+In the next step, a number of nodes were assigned their own (strict) clocks:
+
+- Eupercaria (*Canthigaster figueiredoi* + *Cephalopholis argus*)
+- Carangaria (*Centropomus medius* + *Alepes kleinii*)
+- Ovalenteria (*Xenentodon cancila* + *Emblemariopsis* sp.)
+- Pelagiaria (*Chiasmodon niger* + *Psenes cyanophrys*)
+- Syngnathiformes (*Syngnathus fuscus* + *Pseudupeneus maculatus*)
+- Gobiaria (*Kurtus gulliveri* + *Periophthalmus barbarus*)
+- *Lepophidium profundorum* + *Carapus bermudensis*
+- Rondeletiidae + Holocentridae (*Rondeletia loricata* + *Myripristis leiognathus*)
+- Paracanthopterygii (*Lampris guttatus* + *Gadus morhua*)
+
+The objective was to assign a separate clock to each of the six major percomorph subgroups (Eupercaria, Carangaria, Ovalentaria, Pelagiaria, Syngnathiformes, Gobiaria), and then to each of their sister groups that branched off successively closer to the root, ending with the Paracanthopterygii. However, as BEAST is unable to give local clocks to individual tips, only outgroups comprising two or more terminal taxa were assigned their own clocks, while the rates of *Batrachoides* and *Anoplogaster* were governed by a common tree-wide clock (set up by the `clock.rate` parameter) separate from all the local clocks. Both the local clocks as well as the tree-wide clock were strict, and all were assigned the same prior: a lognormal distribution with a mean of 0.005 (in real space), a standard deviation of 1, and an initial value of 0.005.
+
+By default, BEAST assumes that if the fixed local clock model is selected, the subset of nodes that are to be assigned their own clocks is identical to the set of calibrated nodes. This was not the case in the analysis below. However, this problem can be solved in the following way: (1) In the "Taxa" tab of BEAUTi, enforce the monophyly of those nodes which are going to receive their own clocks but not the monophyly of the calibrated nodes. Note that this makes no difference in practice, since the analysis is to be run on a fixed topology, but it does prevent BEAST from assigning local clocks to the calibrated nodes. (2) In the "Priors" tab of BEAUTi, both the calibrated nodes and the "clock-bearing" nodes are expected to receive calibration priors. While these are only available for the former category, the latter category can be effectively freed from the need to specify priors by selecting the `Use Tree Prior` option in BEAUTi.
+
+All the other settings (substitution models, calibration densities, the fixed topology operator mix) were identical to the uncorrelated lognormal clock analysis described above.
+
+The analysis was run as follows:
+
+```
+/home/linuxbrew/.linuxbrew/bin/beast -beagle_SSE -beagle_scaling dynamic fixed-local-strict-13-calib.xml
+```
+
+The chain reached the target length of 500 million generations after 11.626 days.
+
+```{r comment='', echo = FALSE, message=F, warning=F, eval = FALSE}
+# Operator analysis results:
+cat(readLines("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/fixed-local-strict-13-calib-operators.txt"), sep = '\n')
+```
+
+The effective samples sizes of individual parameters as calculated by LogAnalyser were as follows:
+
+```
+/home/linuxbrew/.linuxbrew/bin/loganalyser -burnin 50000000 -ess fixed-local-strict-13-calib.log
+```
+
+```{r, echo=FALSE}
+options(scipen=999)
+fixed13ess <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/fixed-local-strict-13-calib-LogAnalyser-output.txt", header=TRUE)
+fixed13ess[,c(1,4,7)]
+```
+
+Since the ESS values exceeded 200 for all parameters except one (`tmrca(Eupercaria)`), the maximum clade credibility tree with 95% HPD intervals for all node ages was constructed as a summary of the posterior distribution:
+
+```
+/home/linuxbrew/.linuxbrew/bin/treeannotator -burnin 50000000 -heights median fixed-local-strict-13-calib.trees fixed-local-strict-13-calib.tre
+```
+
+This tree was compared to a preliminary tree based on ~253 million generations to see if the estimated node ages (and that of Eupercaria in particular) changed substantially:
+
+![Comparison between the preliminary and final fixed local clock trees (13 calibrations)](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/fixed-local-strict-13-calib_preliminary-vs-final.png)
+
+The 29-calibration version of the fixed local clock analysis was run using the following command, with all other settings identical to the 13-calibration analysis described above:
+
+The analysis was run as follows:
+
+```
+/home/linuxbrew/.linuxbrew/bin/beast -beagle_SSE -beagle_scaling dynamic fixed-local-strict-29-calib.xml
+```
+
+The chain stopped when it reached the specificed length after 12.212 days.
+
+```{r comment='', echo = FALSE, message=F, warning=F, eval = FALSE}
+# Operator analysis results:
+cat(readLines("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/fixed-local-strict-29-calib-operators.txt"), sep = '\n')
+```
+
+The LogAnalyser-generated summary is shown below:
+
+```
+/home/linuxbrew/.linuxbrew/bin/loganalyser -burnin 50000000 -ess fixed-local-strict-29-calib.log
+```
+
+```{r, echo=FALSE}
+options(scipen=999)
+fixed29ess <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/fixed-local-strict-29-calib-LogAnalyser-output.txt", header=TRUE)
+fixed29ess[,c(1,4,7)]
+```
+
+Similar to the 13-calibration analysis, the ESS values of the 29-calibration run also exceeded 200 for all parameters except `tmrca(Eupercaria)`. A summary tree was therefore constructed and compared to a preliminary tree based on the first ~221 million generations:
+
+```
+/home/linuxbrew/.linuxbrew/bin/treeannotator -burnin 50000000 -heights median fixed-local-strict-29-calib.trees fixed-local-strict-29-calib.tre
+```
+
+![Comparison between the preliminary and final fixed local clock trees (29 calibrations)](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/fixed-local-strict-29-calib_preliminary-vs-final.png)
+
+![Comparison of the BEAST analyses under the fixed local clocks and 12/28 calibrations with the manuscript tree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/BEAST-fixed-local-12-vs-28.png)
+
+### MCMCTree analysis
 
 In PAML, subsets of a concatenated alignment cannot be simply ignored as in BEAST but must be removed from the file, so that the sum of partition lengths equals the total number of nucleotides (PAML manual: p. 13). Moreover, the sites that make up a partition must be adjacent in the alignment. Therefore, the following information from the `best_scheme` file generated by PartitionFinder was used to generate a PAML-compatible alignment:
 
@@ -2171,7 +2350,40 @@ xmax = 0.0000e+00 close to zero at 224!
 
 However, these did not cause baseml to crash, and the Hessian matrices were successfully written into `out.BV` files. Therefore, the `usedata` variable was set to 2, the `out.BV` files were moved to `in.BV`, and four separate MCMC chains with a length of 75 million generations (as specified in the configuration file above) were started.
 
+# Test for autocorrelation in PhyloBayes
+
+Rationale: in order to perform Bayes factor model comparisons in PhyloBayes, it is necessary to first run the estbranches program from the Multidistribute package to calculate a variance-covariance matrix for branch lengths. As its input, estbranches requires a substitution model with fixed-value parameters (i.e., the parameters of the model are not estimated simultaneously with the branch lengths). A properly formatted model file can be generated from baseml output using one of the scripts in the package.
+
+1. Compile `paml2modelinf.c` from the Multidistribute package v 9/25/03:
+
+    ```
+    cc paml2modelinf.c arrayutl.c -lm -O -o paml2modelinf
+    ```
+    
+2. Run baseml on an unpartitioned version of the SortaDate alignment. This was done using a fixed tree topology with a single root calibration at 120.5 Ma (equal to the mean of the uniform distribution with support from 98 to 143 Ma) and the F84 substitution model, which is required by estbranches.
+
+PhyloBayes uses Bayes factors with marginal likelihoods computed using thermodynamic integration (path sampling) for model comparisons. All comparisons are between the user's model of choice and the default, unconstrained model, whose prior is defined for unrooted trees (Lepage et al. 2007). The commands below were used to perform comparisons between this model and (1) the autocorrelared lognormal model as well as (2) the uncorrelated gamma model, which is the closest equivalent of the uncorrelated models implemented in BEAST (the uncorrelated exponential model offered in BEAUTi is its special case).
+
+Note that the `.oes` file used for model comparison has the following components:
+
+1. topology without tip names but with (what appears to be) branch lengths
+2. list of tip names and numbers
+3. list of parent-child triplets (with tips represented by their numbers)
+4. variance-covariance matrix
+
+According to the manual, the variance-covariance matrix can be obtained using Thorne et al.'s `estbranches`. The PAML manual states that MCMCTree under the `usedata = 3` setting performs the same function. Will the PAML-generated matrix be readable by PhyloBayes?
+
+(Since PhyloBayes does not support partitioning, a new PAML analysis was run on an unpartitioned version of the dataset but with otherwise identical settings.)
+
+../bf -cov chunkbrlen.oes -long -ln chunklnbf
+../bf -cov chunkbrlen.oes -long -ugam chunkugambf
+
+Uncorrelated gamma vs unconstrained: logBF = 36.6282 [36.4131 : 41.7097]
+Autocorrelated lognormal vs. unconstrained: logBF = 77.3395 [59.7214 : 78.3891]
+
 # Refs:
+
+Lepage T, Bryant D, Philippe H, Lartillot N 2007 A general comparison of relaxed molecular clock models. Mol Biol Evol 24(12): 2669--80
 
 Ronquist F, Deans AR 2010 Bayesian phylogenetics and its influence on insect systematics. Annu Rev Entomol 55: 189--206
 
