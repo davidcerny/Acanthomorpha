@@ -1160,10 +1160,10 @@ java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.TreeAnn
 java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.TreeAnnotator -burnin 0 -heights median fastest3-combined.trees fastest3.tre
 ```
 
-![fastest2 BEAST time tree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/BEAST_Combined/fastest1.png)
+![fastest1 BEAST time tree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/BEAST_Combined/fastest1.png)
 
 ![fastest2 BEAST time tree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/BEAST_Combined/fastest2.png)
-![fastest2 BEAST time tree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/BEAST_Combined/fastest3.png)
+![fastest3 BEAST time tree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/BEAST_Combined/fastest3.png)
 
 ## Analysis Protocol. Phase 2 -- Root Calibration
 
@@ -1267,7 +1267,7 @@ up:ucld.mean down:nodeHeights(treeModel) | 0.966  | 18335384  | 129993472 | 7.09
 swapOperator(branchRates.categories)     |        | 61120866  | 162668944 | 2.66    | 0.0901  
 uniformInteger(branchRates.categories)   |        | 61108518  | 126829868 | 2.08    | 0.1672 
 
-The results were examined in LogAnalyser with the following results:
+The output was examined in LogAnalyser with the following results:
 
 ```
 java -Xmx6000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.LogAnalyser -burnin 50000000 -ess fastest1rootcal.log
@@ -1533,11 +1533,7 @@ The analyses finished in 39:32:49 (fastest1ext), 39:29:45 (fastest2ext), 39:24:1
 
 ![largest3ext PAML time tree](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Largest_Partitions/largest3ext.png)
 
-## Analysis Protocol. Phase 3 -- Truncated Cauchy priors
-
-All of the mcmcTREE analyses above were performed with piecewise calibration densities that consisted of (1) a power-decay function left of the lower bound, (2) a uniform density between the lower and upper bounds, and (3) an exponential-decay function right of the upper bound. Different portions of the total probability mass can be allocated to these 3 densities: in the tree and control files shown above, these fractions were set equal to $P = 10^{-300}$ for (1) and $P =$ 0.05 for (3) to make the lower bounds as "hard" as possible while keeping the upper bounds relatively soft. However, it has been noted that calibrated divergences are generally more likely to take place shortly before the occurrence of the calibration fossil than to predate it by a large margin (Brown & van Tuinen 2011), suggesting that the uniform distribution might not be the best description of the uncertainty associated with divergence ages.
-
-## Analysis Protocol. Phase 4 -- Corrected Calibrations
+## Analysis Protocol. Phase 3 -- Corrected Calibrations
 
 Similar to the PhyloBayes analyses described above, the mcmcTREE analyses were re-run under a corrected version of the original guide tree, in which the upper bound of the *Homonotichthys* calibration placed on the (*Polymixia* + *Aphredoderus*) node was decreased from 128.04 Ma to 116.35 Ma. All other settings were retained:
 
@@ -2386,20 +2382,20 @@ Next, a Hessian matrix was generated and stored in `out.BV` using the following 
 mcmctree bestmcmctree.ctl
 ```
 
-After the appropriate modifications of the control and output files, a second mcmcTREE analysis was started using the same command.
+After the appropriate modifications of the control and output files, additional mcmcTREE analyses were started using the same command.
 
 Chain  | Hessian matrix estimation | Time tree analysis
 -------|---------------------------|-------------------
 best   | 2:27                      | 50:40:01
-best2  | 4:52                      |
-best3  | 4:52                      |
-best4  | 4:43                      |
-best5  | 5:22                      |
-best6  | 4:46                      |
-best7  | 4:39                      |
-best8  | 5:00                      |
-best9  | 5:19                      |
-best10 | 5:20                      |
+best2  | 4:52                      | 53:45:10
+best3  | 4:52                      | 54:28:15
+best4  | 4:43                      | 53:39:23
+best5  | 5:22                      | 54:34:23
+best6  | 4:46                      | 53:16:39
+best7  | 4:39                      | 54:47:55
+best8  | 5:00                      | 54:28:37
+best9  | 5:19                      | 54:30:30
+best10 | 5:20                      | 54:33:54
 
 ![PAML time tree of the best partition, run 1](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Best_partition/best1.png)
 
@@ -2417,3 +2413,591 @@ The prior placed on the (*Polymixia* + *Aphredoderus*) node (calibrated by *Homo
 ```
 beast -threads 12 -beagle_SSE bestpartition-run1.xml
 ```
+
+The MCMC simulation collected the specified number of samples after 19.028 days. The operator analysis is given below:
+
+Operator                                 | Tuning   Count      Time     Time/Op  Pr(accept) 
+-----------------------------------------|-------|----------|-----------|-------|----------
+scale(ac)                                | 0.85  | 2445397  | 54976554  | 22.48 | 0.2283   
+scale(ag)                                | 0.907 | 2444993  | 54984114  | 22.49 | 0.2202   
+scale(at)                                | 0.853 | 2443469  | 54935581  | 22.48 | 0.2261   
+scale(cg)                                | 0.867 | 2443365  | 54935694  | 22.48 | 0.2215   
+scale(gt)                                | 0.847 | 2442848  | 54925132  | 22.48 | 0.2252   
+frequencies                              | 0.013 | 2443370  | 54932692  | 22.48 | 0.2403   
+scale(alpha)                             | 0.589 | 2444338  | 54890620  | 22.46 | 0.2353   
+scale(ucld.mean)                         | 0.953 | 14663046 | 329423144 | 22.47 | 0.2204   
+scale(ucld.stdev)                        | 0.971 | 14664036 | 222570742 | 15.18 | 0.2345   
+scale(treeModel.rootHeight)              | 0.944 | 7332221  | 13659315  | 1.86  | 0.1977  
+uniform(nodeHeights(treeModel))                  | 73331342 | 341773159 | 4.66  | 0.1717   
+scale(birthDeath.meanGrowthRate)         | 0.556 | 7327596  | 2221962   | 0.3   | 0.2431   
+scale(birthDeath.relativeDeathRate)      | 0.146 | 7336346  | 2180958   | 0.3   | 0.2599   
+up:ucld.mean down:nodeHeights(treeModel) | 0.968 | 7337904  | 84246922  | 11.48 | 0.2321   
+swapOperator(branchRates.categories)     |       | 24452366 | 136930967 | 5.6   | 0.0893  
+uniformInteger(branchRates.categories)   |       | 24447363 | 109465694 | 4.48  | 0.1756
+
+LogAnalyser was then used to determine the effective sample size for each parameter, with the first 20 million generations removed as burnin:
+
+```
+java -Xmx6000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.LogAnalyser -burnin 20000000 -ess bestpartition-run1.log
+```
+
+```{r, echo=FALSE}
+options(scipen=999)
+loganalyser1peru <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Best_partition/BEAST/bestpartition-run1_LogAnalyser_output.txt", header=TRUE)
+loganalyser1peru[,-c(4,5,6,8,9)]
+```
+
+Based on these results, a new chain was started with identical settings but the length increased to 600 million generations. This second chain reached its target length after 64.364 days, with the following operator analysis results:
+
+Operator                                 | Tuning | Count     | Time       | Time/Op | Pr(accept)
+-----------------------------------------|--------|-----------|------------|---------|-----------
+scale(ac)                                | 0.846  | 7331927   | 186929095  | 25.5    | 0.22    
+scale(ag)                                | 0.898  | 7334227   | 186984263  | 25.49   | 0.1959
+scale(at)                                | 0.853  | 7336079   | 187054187  | 25.5    | 0.2272
+scale(cg)                                | 0.871  | 7334997   | 187012204  | 25.5    | 0.2293  
+scale(gt)                                | 0.843  | 7337272   | 187087675  | 25.5    | 0.2166
+frequencies                              | 0.013  | 7330537   | 186898992  | 25.5    | 0.2395  
+scale(alpha)                             | 0.591  | 7335257   | 186746791  | 25.46   | 0.2382  
+scale(ucld.mean)                         | 0.955  | 44005039  | 1120908974 | 25.47   | 0.2288
+scale(ucld.stdev)                        | 0.972  | 43988969  | 751490302  | 17.08   | 0.236 
+scale(treeModel.rootHeight)              | 0.943  | 21998600  | 43227408   | 1.97    | 0.1937 
+uniform(nodeHeights(treeModel))          |        | 219990688 | 1144739086 | 5.2     | 0.1717
+scale(birthDeath.meanGrowthRate)         | 0.546  | 21995747  | 6386106    | 0.29    | 0.2333 
+scale(birthDeath.relativeDeathRate)      | 0.143  | 22006646  | 6248694    | 0.28    | 0.2548   
+up:ucld.mean down:nodeHeights(treeModel) | 0.969  | 21992767  | 284791871  | 12.95   | 0.233   
+swapOperator(branchRates.categories)     |        | 73347175  | 458963698  | 6.26    | 0.0889 
+uniformInteger(branchRates.categories)   |        | 73334073  | 365535882  | 4.98    | 0.1748 
+
+LogAnalyser was used to examine the resulting sample of parameter values, with burnin set to the first 10% of the chain (60 million generations). The analysis yielded the following ESS values:
+
+```{r, echo=FALSE}
+options(scipen=999)
+loganalyser1peru <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Best_partition/BEAST/bestpartition-run2_LogAnalyser_output.txt", header=TRUE)
+loganalyser1peru[,-c(4,5,6,8,9)]
+```
+
+The following steps were taken to combine the two runs:
+
+1. Remove the first 10% of samples as burnin from both chains to produce truncated log files:
+
+    ```
+    java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.LogCombiner -burnin 20000001 bestpartition-run1.log bestpartition-run1-no-burnin.log
+    java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.LogCombiner -burnin 60000001 bestpartition-run2.log bestpartition-run2-no-burnin.log
+    ```
+    
+2. Combine the truncated log files:
+
+    ```
+    java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.LogCombiner -burnin 0 bestpartition-run1-no-burnin.log bestpartition-run2-no-burnin.log bestpartition-combined.log
+    ```
+
+3. Re-analyze the combined log file for ESS values:
+
+    ```
+    java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.LogAnalyser -burnin 0 -ess bestpartition-combined.log
+    ```
+    
+```{r, echo=FALSE}
+options(scipen=999)
+loganalyser1peru <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Best_partition/BEAST/bestpartition-combined_LogAnalyser_output.txt", header=TRUE)
+loganalyser1peru[,-c(4,5,6,8,9)]
+```
+
+Since all the effective sample sizes exceeded 200, the same sequence of steps was repeated for the corresponding `.trees` files. The resulting file (with 720,000 trees) was then passed to TreeAnnotator in order to identify the MCC tree and summarize the posterior distribution of divergence times:
+
+```
+java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.LogCombiner -trees -burnin 20000001 bestpartition-run1.trees bestpartition-run1-no-burnin.trees
+java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.LogCombiner -trees -burnin 60000001 bestpartition-run2.trees bestpartition-run2-no-burnin.trees
+java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.LogCombiner -trees -burnin 0 bestpartition-run1-no-burnin.trees bestpartition-run2-no-burnin.trees bestpartition-combined.trees
+java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.TreeAnnotator -burnin 0 -heights median bestpartition-combined.trees
+```
+
+![BEAST time tree of the best partition](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Best_partition/BEAST/bestpartition.png)
+
+# Analyses of the 4-partition dataset
+
+## Replicates of the original analysis
+
+10 more replicates of the initial four-partition PAML analyses (with independent rates, 13 calibrations including the root prior, and with the uncorrected upper bound for the *Homonotichthys* calibration) were run using the provided tree and configuration files. The run times for the second stage of the analysis (following Hessian matrix estimation) are recorded below:
+
+Chain              | Run time
+-------------------|---------
+PAML 4part repl1:  | 89:07:01
+PAML 4part repl2:  | 87:56:03
+PAML 4part repl3:  | 89:06:35
+PAML 4part repl4:  | 90:02:35
+PAML 4part repl5:  | 88:36:36
+PAML 4part repl6:  | 55:05:23
+PAML 4part repl7:  | 55:16:33
+PAML 4part repl8:  | 55:04:35
+PAML 4part repl9:  | 55:10:36
+PAML 4part repl10: | 56:20:16
+
+![Comparison of the original (red) four-partition MCMCTree analysis and its 10 replicates (grayscale shades)](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Four_partitions/4-part-10-replicate-comparison.png)
+
+After this step, several more analyses were run using configuration files almost completely identical to the one used to generate the manuscript tree (`ctl_post-hessian__run_6_4_partitions_12_cali_no_outgroups_scheme_3.tre.ctl`), with just one variable changed at a time:
+
+## 12 calibrations, autocorrelated rates
+
+Here, the `clock` option was set to 3 (correlated rates) rather than 2 (independent rates). The analysis finished up after 51:13:44.
+
+## 28 calibrations, independent rates
+
+The clock option was kept at the original value (2, i.e., independent rates), but the supplied tree topology included 28 calibrations instead of the initial 12. The analysis finished up after 44:44:44.
+
+## 28 calibrations, autocorrelated rates
+
+Identical to the previous analysis except for the clock value, which was changed to 3. The chain reached its target length after 51:24:53.
+
+![4-partition dataset, PAML, 12 calibrations: uncorrelated vs. autocorrelated rates](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Four_partitions/4-part-autocorr_vs_manuscript.png)
+![4-partition dataset, PAML, 28 calibrations: uncorrelated vs. autocorrelated rates](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Four_partitions/4-part-ext-uncorr-vs-autocorr.png)
+![4-partition dataset, PAML, uncorrelated rates: 12 vs. 28 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Four_partitions/4-part-ext_vs_manuscript.png)
+![4-partition dataset, PAML, autocorrelated rates: 12 vs. 28 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Four_partitions/4-part-autocorr-12-vs-28.png)
+![4-partition dataset, PAML: four-way comparison](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Four_partitions/four-way_comparison.png)
+
+# Tree Comparisons 
+
+## Comparisons Across Platforms
+
+### Fastest 1
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+    - BEAST w/o root cal.: none
+    - BEAST w/ root cal.: exponential (offset: 98 Ma, 97.5th percentile: 143 Ma)
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+- Calibrations: 12 (BEAST w/o root cal.) / 13 (all others)
+
+```{r, eval = FALSE}
+library(ape)
+library(phytools)
+library(readr)
+
+t1 <- read.tree("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/PhyloBayes_Final_(Calib)/fastest1cali_sample.labels")
+
+# Note: to successfully read in the PAML nexus file and avoid subscript-out-of-bounds
+# errors, replace the line below "BEGIN TREES;" with:
+#
+# tree TREE1 = [&R]
+# (((lampris_guttatus: ...
+#
+# instead of:
+#
+# 	UTREE 1 = (((lampris_guttatus: ...
+
+t2 <- read.nexus("/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Fastest_Over_2000/fastest1.tre")
+# As PAML node ages are given in units of tens of millions of years, they must be rescaled:
+t2$edge.length <- 10*t2$edge.length
+t3 <- read.nexus("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/BEAST_Combined/fastest1.tre")
+t4 <- read.nexus("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/BEAST_Rooted/fastest1rootcal.tre")
+
+h1 <- max(nodeHeights(t1))
+h2 <- max(nodeHeights(t2))
+h3 <- max(nodeHeights(t3))
+h4 <- max(nodeHeights(t4))
+plotTree(if (h1 > max(h2, h3, h4)) t1 else if (h2 > max(h1, h3, h4)) t2 else if (h3 > max(h1, h2, h4)) t3 else t4, plot=FALSE, mar=c(4.1,1.1,1.1,1.1))
+xlim <- get("last_plot.phylo", envir=.PlotPhyloEnv)$x.lim[2:1]
+plotTree(t1, color=make.transparent("blue",0.5), mar=c(4.1,1.1,1.1,1.1),
+         xlim=xlim, direction="leftwards", lwd=3)
+T1 <- get("last_plot.phylo",envir=.PlotPhyloEnv)
+axis(1)
+plotTree(t2, color=make.transparent("black",0.5), mar=c(4.1,1.1,1.1,1.1),
+         xlim=xlim, add=TRUE, direction="leftwards", ftype="off", lwd=3)
+T2 <- get("last_plot.phylo",envir=.PlotPhyloEnv)
+plotTree(t3, color=make.transparent("red",0.5), mar=c(4.1,1.1,1.1,1.1),
+         xlim=xlim, add=TRUE, direction="leftwards", ftype="off", lwd=3)
+T3 <- get("last_plot.phylo",envir=.PlotPhyloEnv)
+plotTree(t4, color=make.transparent("orange",0.5), mar=c(4.1,1.1,1.1,1.1),
+         xlim=xlim, add=TRUE, direction="leftwards", ftype="off", lwd=3)
+T4 <- get("last_plot.phylo",envir=.PlotPhyloEnv)
+legend(x="top", legend = c("PhyloBayes", "MCMCTree", "BEAST w/o root cal.", "BEAST w/ root cal."), col=c("blue", "black", "red", "orange"), pch=1, cex = 0.5, bty = "n")
+
+# Note: even though the code above is fully functional, graphically, best results
+# are achieved when the output is modified to prevent taxon names from being obscured.
+```
+
+
+![fastest1 plus 13 calibrations: PhyloBayes vs. MCMCTree vs. BEAST](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/fastest1comparison.png)
+
+### Fastest 1, extended calibration set
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+- Calibrations: 29
+
+![fastest1 plus 29 calibrations: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/fastest1ext_comparison.png)
+
+### Fastest 2
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+    - BEAST w/o root cal.: none
+    - BEAST w/ root cal.: exponential (offset: 98 Ma, 97.5th percentile: 143 Ma)
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+- Calibrations: 12 (BEAST w/o root cal.) / 13 (all others)
+
+![fastest2 plus 13 calibrations: PhyloBayes vs. MCMCTree vs. BEAST](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/fastest2comparison.png)
+
+### Fastest 2, extended calibration set
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+- Calibrations: 29
+
+![fastest2 plus 29 calibrations: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/fastest2ext_comparison.png)
+
+### Fastest 3
+
+Note: the root-calibrated BEAST analysis of this partition did not converge within 500 million generations.
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+    - BEAST: none
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+- Calibrations: 12 (BEAST) / 13 (PhyloBayes, MCMCTree)
+
+![fastest3 plus calibrations: PhyloBayes vs. MCMCTree vs. BEAST](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/fastest3comparison.png)
+
+### Fastest 3, extended calibration set
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+- Calibrations: 29
+
+![fastest3 plus 29 calibrations: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/fastest3ext_comparison.png)
+
+### Largest 3
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+- Calibrations: 13
+
+![largest3 plus 13 calibrations: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Largest_Partitions/largest3comparison.png)
+
+### Largest 3, extended calibration set
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+- Calibrations: 29
+
+![largest3 plus 29 calibrations: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Largest_Partitions/largest3ext_comparison.png)
+
+### Median 1
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+- Calibrations: 13
+
+![median1: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Median_Rates/median1comparison.png)
+
+### Median 2
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+- Calibrations: 13
+
+![median2: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Median_Rates/median2comparison.png)
+
+### Median 3
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+- Calibrations: 13
+
+![median3: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Median_Rates/median3comparison.png)
+
+### Rcluster 1
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+- Calibrations: 13
+
+![rcluster1 plus 13 calibrations: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/rcluster/rcluster1comparison.png)
+
+### Rcluster 1, extended calibration set
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+- Calibrations: 29
+
+![rcluster1 plus 29 calibrations: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/rcluster/rcluster1ext_comparison.png)
+
+### Rcluster 2
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+- Calibrations: 13
+
+![rcluster2 plus 13 calibrations: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/rcluster/rcluster2comparison.png)
+
+### Rcluster 2, extended calibration set
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+- Calibrations: 29
+
+![rcluster2 plus 29 calibrations: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/rcluster/rcluster2ext_comparison.png)
+
+### Rcluster 3
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+- Calibrations: 13
+
+![rcluster3 plus 13 calibration: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/rcluster/rcluster3comparison.png)
+
+### Rcluster 3, extended calibration set
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+- Calibrations: 29
+
+![rcluster3 plus 29 calibrations: PhyloBayes vs. MCMCTree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/rcluster/rcluster3ext_comparison.png)
+
+### Best partition selected by SortaDate
+
+- Root calibration:
+    - PhyloBayes: soft uniform from 98 Ma to 143 Ma
+    - MCMCTree: soft uniform from 98 Ma to 143 Ma
+    - BEAST: truncated exponential (offset: 98 Ma, mean: 120.5 Ma, maximum: 143 Ma)
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+- Calibrations: 13
+
+![best partition selected by SortaDate: PhyloBayes vs. MCMCTree vs. BEAST](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Best_partition/bestcomparison.png)
+
+## Comparisons Across Calibration Sets
+
+### Fastest 1, PhyloBayes
+
+(Notice the problem with node rotation within Gobiaria, but also in other parts of the tree. This is due to different ways in which MCMCTree and PhyloBayes write the output file; the topology was fixed and identical.)
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+
+![PhyloBayes analysis of the fastest1 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/fastest1-phylobayes-calibration-comparison.png)
+
+### Fastest 1, MCMCTree
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+
+![MCMCTree analysis of the fastest1 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Fastest_Over_2000/fastest1-mcmctree-calibration-comparison.png)
+
+### Fastest 2, PhyloBayes
+
+(See the warning above about node rotation.)
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+
+![PhyloBayes analysis of the fastest2 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/fastest2-phylobayes-calibration-comparison.png)
+
+### Fastest 2, MCMCTree
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+
+![MCMCTree analysis of the fastest2 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Fastest_Over_2000/fastest2-mcmctree-calibration-comparison.png)
+
+### Fastest 3, PhyloBayes
+
+(See the warning above about node rotation.)
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+
+![PhyloBayes analysis of the fastest3 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/fastest3-phylobayes-calibration-comparison.png)
+
+### Fastest 3, MCMCTree
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+
+![MCMCTree analysis of the fastest3 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Fastest_Over_2000/fastest3-mcmctree-calibration-comparison.png)
+
+### Largest 1, MCMCTree
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+
+![MCMCTree analysis of the largest1 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Largest_Partitions/largest1-mcmctree-calibration-comparison.png)
+
+### Largest 3, PhyloBayes
+
+(See the warning above about node rotation.)
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+
+![PhyloBayes analysis of the largest3 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Largest_Partitions/largest3-phylobayes-calibration-comparison.png)
+
+### Largest 3, MCMCTree
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: uncorrected (95th percentile = 128.04 Ma)
+
+![MCMCTree analysis of the largest3 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Largest_Partitions/largest3-mcmctree-calibration-comparison.png)
+
+### Median 1, MCMCTree
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+
+![MCMCTree analysis of the median1 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Median_Rates/median1-mcmctree-calibration-comparison.png)
+
+### Median 2, MCMCTree
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+
+![MCMCTree analysis of the median2 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Median_Rates/median2-mcmctree-calibration-comparison.png)
+
+### Median 3, MCMCTree
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+
+![MCMCTree analysis of the median3 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Median_Rates/median3-mcmctree-calibration-comparison.png)
+
+### Rcluster 1, MCMCTree
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+
+![MCMCTree analysis of the rcluster1 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/rcluster/rcluster1-mcmctree-calibration-comparison.png)
+
+### Rcluster 2, MCMCTree
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+
+![MCMCTree analysis of the rcluster2 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/rcluster/rcluster2-mcmctree-calibration-comparison.png)
+
+### Rcluster 3, MCMCTree
+
+- Root calibration: soft uniform from 98 Ma to 143 Ma
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration: corrected (95th percentile = 116.35 Ma)
+
+![MCMCTree analysis of the rcluster3 partition: 13 vs. 29 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/rcluster/rcluster3-mcmctree-calibration-comparison.png)
+
+## Comparisons of Corrected and Uncorrected Analyses
+
+### Fastest 1, PhyloBayes
+
+(See the warning above about node rotation. Note also that the manuscript tree used the uncorrected version of the *Homonotichthys* calibration.)
+
+- Calibrations: 13
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration
+    - uncorrected (95th percentile = 128.04 Ma) 
+    - corrected (95th percentile = 116.35 Ma)
+
+![PhyloBayes analysis of the fastest1 partition: corrected vs. uncorrected *Homonotichthys* calibration](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/fastest1-phylobayes-correction-comparison.png)
+
+### Fastest 1, MCMCTree
+
+- Calibrations: 13
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration
+    - uncorrected (95th percentile = 128.04 Ma) 
+    - corrected (95th percentile = 116.35 Ma)
+
+![MCMCTree analysis of the fastest1 partition: corrected vs. uncorrected *Homonotichthys* calibration](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Fastest_Over_2000/fastest1-mcmctree-correction-comparison.png)
+
+### Fastest 2, PhyloBayes
+
+(See the warning above about node rotation. Note also that the manuscript tree used the uncorrected version of the *Homonotichthys* calibration.)
+
+- Calibrations: 13
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration
+    - uncorrected (95th percentile = 128.04 Ma) 
+    - corrected (95th percentile = 116.35 Ma)
+
+![PhyloBayes analysis of the fastest2 partition: corrected vs. uncorrected *Homonotichthys* calibration](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/fastest2-phylobayes-correction-comparison.png)
+
+### Fastest 2, MCMCTree
+
+- Calibrations: 13
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration
+    - uncorrected (95th percentile = 128.04 Ma) 
+    - corrected (95th percentile = 116.35 Ma)
+
+![MCMCTree analysis of the fastest2 partition: corrected vs. uncorrected *Homonotichthys* calibration](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Fastest_Over_2000/fastest2-mcmctree-correction-comparison.png)
+
+### Fastest 3, PhyloBayes
+
+(See the warning above about node rotation. Note also that the manuscript tree used the uncorrected version of the *Homonotichthys* calibration.)
+
+- Calibrations: 13
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration
+    - uncorrected (95th percentile = 128.04 Ma) 
+    - corrected (95th percentile = 116.35 Ma)
+
+![PhyloBayes analysis of the fastest3 partition: corrected vs. uncorrected *Homonotichthys* calibration](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Fastest_Over_2000/fastest3-phylobayes-correction-comparison.png)
+
+### Fastest 3, MCMCTree
+
+- Calibrations: 13
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration
+    - uncorrected (95th percentile = 128.04 Ma) 
+    - corrected (95th percentile = 116.35 Ma)
+
+![MCMCTree analysis of the fastest3 partition: corrected vs. uncorrected *Homonotichthys* calibration](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Fastest_Over_2000/fastest3-mcmctree-correction-comparison.png)
+
+### Largest 1, MCMCTree
+
+- Calibrations: 13
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration
+    - uncorrected (95th percentile = 128.04 Ma) 
+    - corrected (95th percentile = 116.35 Ma)
+
+![MCMCTree analysis of the largest1 partition: corrected vs. uncorrected *Homonotichthys* calibration](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Largest_Partitions/largest1-mcmctree-correction-comparison.png)
+
+### Largest 3, PhyloBayes
+
+(See the warning above about node rotation. Note also that the manuscript tree used the uncorrected version of the *Homonotichthys* calibration.)
+
+- Calibrations: 13
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration
+    - uncorrected (95th percentile = 128.04 Ma) 
+    - corrected (95th percentile = 116.35 Ma)
+
+![PhyloBayes analysis of the largest3 partition: corrected vs. uncorrected *Homonotichthys* calibration](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Largest_Partitions/largest3-phylobayes-correction-comparison.png)
+
+### Largest 3, MCMCTree
+
+- Calibrations: 13
+- *Homonotichthys* (*Polymixia* + *Aphredoderus*) calibration
+    - uncorrected (95th percentile = 128.04 Ma) 
+    - corrected (95th percentile = 116.35 Ma)
+
+![MCMCTree analysis of the largest3 partition: corrected vs. uncorrected *Homonotichthys* calibration](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Largest_Partitions/largest3-mcmctree-correction-comparison.png)
