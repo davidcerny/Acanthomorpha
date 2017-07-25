@@ -1938,7 +1938,7 @@ sitesnrates2 <- data.frame(sites2, scalers2)
 plot(sitesnrates2$sites2, sitesnrates2$scalers2, xlab = "Number of sites in partition", ylab = "Sum of branch lengths", main = "Concatenated chunk partitions: sites vs. tree length")
 ```
 
-### BEAST analysis
+## BEAST analysis
 
 The two 50-bp partitions were removed. Each partition received its own substitution model, which was generally identical to that selected by PartitionFinder, except for those models that contained the I parameter (proportion of invariant sites). Since this parameter and $\Gamma$ account for the same phenomenon (rate heterogeneity across sites), their simultaneous inclusion causes the resulting model to be non-identifiable, leading to potential mixing problems in MCMC simulations. The models that were not directly available in BEAUTi were implemented as follows:
 
@@ -1985,7 +1985,21 @@ java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.TreeAnn
 
 ![Comparison with the MCMCTree-generated tree from the manuscript](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/BEAST-manuscript-tree-comparison.png)
 
-#### BEAST: Random local clocks
+Five more replicates of the analysis above were run. These finished after 7.687, 7.755, 8.275, 8.365, and 8.386 days, respectively. Each was summarized using TreeAnnotator, after passing the corresponding log file to LogAnalyser to ensure that no parameter had an effective sample size smaller than 200:
+
+```
+/home/linuxbrew/.linuxbrew/bin/treeannotator -burnin 50000000 -heights median concatchunks.trees repl5-BEAST-uncorr-lognorm-12-calib.tre
+```
+
+While the LogAnalyser results are based on the full log files (comprising 500,000 samples), the maximum clade credibility trees were constructed from `.trees` file that were resampled at a frequency of 1 sample per 25,000 generations to limit the file size. Similarly, after the LogAnalyser examination, the log files were resampled with the same frequency in order to be downloaded and saved to the local machine.
+
+```
+/home/linuxbrew/.linuxbrew/bin/logcombiner -trees -resample 25000 concatchunks.trees repl1-concatchunks-resampled.trees
+/home/linuxbrew/.linuxbrew/bin/treeannotator -burnin 50000000 -heights median repl3-concatchunks-resampled.trees repl3-BEAST-uncorr-lognorm-12-calib.tre
+/home/linuxbrew/.linuxbrew/bin/logcombiner -resample 25000 concatchunks.log repl1-concatchunks-resampled.log
+```
+
+### BEAST: Random local clocks
 
 Two more analyses were performed using BEAST; their settings were identical to those described above except for the clock model used. In both cases, a random local clock model was utilized, with one analysis using the uncorrelated version of the model (with the `ratesAreMultipliers` option in the XML file set to the default value of `"false"`) and the other employing the correlated version (`ratesAreMultipliers="true"`). In both analyses, default priors were placed on the parameters of the clock model.
 
@@ -1997,11 +2011,101 @@ beast -threads 6 -beagle_SSE concatchunks-urlc.xml
 beast -threads 6 -beagle_SSE concatchunks-crlc.xml
 ```
 
-**(Note: these chains did not reach the target length due to a power outage.)**
+The correlated analysis finished up after 29.926 days, with the following ESS values calculated using LogAnalyser for individual parameters:
 
-#### BEAST: Extended calibration set
+```{r comment='', echo = FALSE, message=F, warning=F, eval = FALSE}
+# Operator analysis results:
+cat(readLines("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/concatchunks-crlc-operators.txt"), sep = '\n')
+```
+
+```
+java -Xmx6000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.LogAnalyser -burnin 50000000 -ess concatchunks-crlc.log
+```
+
+```{r, echo=FALSE}
+options(scipen=999)
+chunkcrlc <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/concatchunks-crlc-LogAnalyser-output.txt", header=TRUE)
+chunkcrlc[,c(1,4,7)]
+```
+
+The effective sample sizes for all parameters except `rateChangeCount` exceeded 200. Despite this, the maximum clade credibility tree was constructed from a resampled `.trees` file:
+
+```
+java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.LogCombiner -trees -resample 25000 concatchunks-crlc.trees concatchunks-crlc-resampled.trees
+java -Xmx20000m -cp /home/analysis/.linuxbrew/lib/beast.jar dr.app.tools.TreeAnnotator -burnin 50000000 -heights median concatchunks-crlc-resampled.trees concatchunks-crlc.tre
+```
+
+The uncorrelated analysis reached the target of 500 million generations after 34.955 days and was subject to a LogAnalyser examination in order to compute the effective sample sizes of the estimated parameters:
+
+```{r comment='', echo = FALSE, message=F, warning=F, eval = FALSE}
+# Operator analysis results:
+cat(readLines("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/concatchunks-urlc-operators.txt"), sep = '\n')
+```
+
+As in the correlated analysis summarized above, only a single parameter had an ESS value of less than 200 (`tmrca(Homonotichthys)`). This result was regarded as acceptable, and steps were therefore taken to summarize the posterior. The `.trees` file was resampled at a frequency of 1 saved tree per 25,000 generations in order to speed up the search for the maximum credibility tree shown in the comparison below.
+
+### BEAST: Extended calibration set
 
 Another analysis was started with settings identical to the first one (in particular, with the uncorrelated lognormal relaxed clock model), but with the extended dataset of 28 calibrations:
+
+```{r, echo = FALSE}
+aipichthys <- (143.0 - 98.0)/qexp(0.95)
+paste("Aipichthys", aipichthys, sep = " = ")
+archaeotetraodon <- (58.5 - 32.02)/qexp(0.95)
+paste("Archaeotetraodon", archaeotetraodon, sep = " = ")
+archaeus <- (80.8 - 54.17)/qexp(0.95)
+paste("Archaeus", archaeus, sep = " = ")
+berybolcensis <- (93.7 - 49.0)/qexp(0.95)
+paste("Berybolcensis", berybolcensis, sep = " = ")
+calatomus <- (63.3 - 11.9)/qexp(0.95)
+paste("Calatomus", calatomus, sep = " = ")
+chaetodontidae <- (66.0 - 29.62)/qexp(0.95)
+paste("Chaetodontidae", chaetodontidae, sep = " = ")
+cretzeus <- (111.3 - 69.71)/qexp(0.95)
+paste("Cretzeus", cretzeus, sep = " = ")
+eastmanalepes <- (69.3 - 49.0)/qexp(0.95)
+paste("Eastmanalepes", eastmanalepes, sep = " = ")
+eobothus <- (79.7 - 49.0)/qexp(0.95)
+paste("Eobothus", eobothus, sep = " = ")
+eobuglossus <- (66.6 - 41.2)/qexp(0.95)
+paste("Eobuglossus", eobuglossus, sep = " = ")
+eucoelopoma <- (94.2 - 54.17)/qexp(0.95)
+paste("Eocoelopoma", eucoelopoma, sep = " = ")
+gasterorhamphosus <- (111.3 - 69.71)/qexp(0.95)
+paste("Gasterorhamphosus", gasterorhamphosus, sep = " = ")
+homonotichthys <- (116.35 - 93.9)/qexp(0.95)
+paste("Homonotichthys", homonotichthys, sep = " = ")
+hoplopteryx <- (128.0 - 93.9)/qexp(0.95)
+paste("Hoplopteryx", hoplopteryx, sep = " = ")
+luvarus <- (80.8 - 54.17)/qexp(0.95)
+paste("Luvarus", luvarus, sep = " = ")
+mahengechromis <- (67.4 - 45.46)/qexp(0.95)
+paste("Mahengechromis", mahengechromis, sep = " = ")
+massamorichthys <- (109.6 - 58.551)/qexp(0.95)
+paste("Massamorichthys", massamorichthys, sep = " = ")
+mene <- (94.6 - 55.2)/qexp(0.95)
+paste("Mene", mene, sep = " = ")
+proacanthurus <- (69.3 - 49.0)/qexp(0.95)
+paste("Proacanthurus", proacanthurus, sep = " = ")
+prosolenostomus <- (93.7 - 49.0)/qexp(0.95)
+paste("Prosolenostomus", prosolenostomus, sep = " = ")
+rhamphexocoetus <- (79.7 - 49.0)/qexp(0.95)
+paste("Rhamphexocoetus", rhamphexocoetus, sep = " = ")
+rhinocephalus <- (94.4 - 53.7)/qexp(0.95)
+paste("Rhinocephalus", rhinocephalus, sep = " = ")
+sphyraena <- (79.7 - 49.0)/qexp(0.95)
+paste("Sphyraena", sphyraena, sep = " = ")
+tarkus <- (61.6 - 49.0)/qexp(0.95)
+paste("Tarkus", tarkus, sep = " = ")
+trachipterus <- (94.0 - 5.33)/qexp(0.95)
+paste("Trachipterus", trachipterus, sep = " = ")
+triodon <- (69.6 - 50.5)/qexp(0.95)
+paste("Triodon", triodon, sep = " = ")
+turkmene <- (122.5 - 54.17)/qexp(0.95)
+paste("Turkmene", turkmene, sep = " = ")
+zenopsis <- (91.4 - 32.02)/qexp(0.95)
+paste("Zenopsis", zenopsis, sep = " = ")
+```
 
 ```
 /home/linuxbrew/.linuxbrew/bin/beast -beagle_SSE -beagle_scaling dynamic concatchunks-ext.xml
@@ -2058,7 +2162,7 @@ The next steps were as follows:
     /home/linuxbrew/.linuxbrew/bin/loganalyser -burnin 0 -ess concatchunks-ext-combined.log
     ```
     
-Although the ESS values for the 4 previously problematic parameters all exceeded 200 when the two runs were combined, the ESS value of one more parameter (`tmrca(Tarkus)`)unexpectedly dropped below the threshold:
+Although the ESS values for the 4 previously problematic parameters all exceeded 200 when the two runs were combined, the ESS value of one more parameter (`tmrca(Tarkus)`) unexpectedly dropped below the threshold:
 
 ```{r, echo=FALSE}
 options(scipen=999)
@@ -2082,7 +2186,7 @@ As can be seen, the ages are nearly identical:
 
 ![Comparison of the BEAST analyses under the uncorrelated lognormal clock and 12/28 calibrations with the manuscript tree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/BEAST-uncorr-12-vs-28.png)
 
-#### BEAST: Fixed local clocks
+### BEAST: Fixed local clocks
 
 In the next step, a number of nodes were assigned their own (strict) clocks:
 
@@ -2174,7 +2278,7 @@ Similar to the 13-calibration analysis, the ESS values of the 29-calibration run
 
 ![Comparison of the BEAST analyses under the fixed local clocks and 12/28 calibrations with the manuscript tree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/BEAST-fixed-local-12-vs-28.png)
 
-### MCMCTree analysis
+## MCMCTree analysis
 
 In PAML, subsets of a concatenated alignment cannot be simply ignored as in BEAST but must be removed from the file, so that the sum of partition lengths equals the total number of nucleotides (PAML manual: p. 13). Moreover, the sites that make up a partition must be adjacent in the alignment. Therefore, the following information from the `best_scheme` file generated by PartitionFinder was used to generate a PAML-compatible alignment:
 
@@ -2339,18 +2443,38 @@ The full configuration file is shown below:
 cat(readLines("/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Chunks/chunkmcmctree.ctl"), sep = '\n')
 ```
 
-The initial analyses (run under the `usedata = 3` option to calculate the Hessian matrices for the branch lengths) produced the following warning messages:
+The initial analyses (run under the `usedata = 3` option to calculate the Hessian matrices for the branch lengths) produced warning messages about branch lengths close to zero, but these did not cause baseml to crash, and the Hessian matrices were successfully written into `out.BV` files. Therefore, the `usedata` variable was set to 2, the `out.BV` files were moved to `in.BV`, and 6 separate MCMC chains with a length of 75 million generations (as specified in the configuration file above) were started:
 
-```
-xmax = 0.0000e+00 close to zero at 226!
-xmax = 0.0000e+00 close to zero at 225!
-xmax = 0.0000e+00 close to zero at 223!
-xmax = 0.0000e+00 close to zero at 224!
-```
+Chain                | Time tree analysis
+---------------------|-------------------
+paml-sortadate       | 549:59:46
+paml-sortadate-repl1 | 544:27:03
+paml-sortadate-repl2 | 549:12:20
+paml-sortadate-repl3 | 551:16:33
+paml-sortadate-repl4 | 497:28:09             
+paml-sortadate-repl5 | 502:41:18   
 
-However, these did not cause baseml to crash, and the Hessian matrices were successfully written into `out.BV` files. Therefore, the `usedata` variable was set to 2, the `out.BV` files were moved to `in.BV`, and four separate MCMC chains with a length of 75 million generations (as specified in the configuration file above) were started.
+![Comparison with the MCMCTree analysis of the same dataset and with the manuscript tree (based on an MCMCTree analysis of the 4-partition dataset)](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/BEAST-MCMCTree-manuscript-tree-comparison.png)
 
-# Test for autocorrelation in PhyloBayes
+### Extended calibration set
+
+The analysis was run under settings identical to those described above, except that the tree used contained 28 calibrations instead of 12. The chain finished up after 505:53:29 with the following results:
+
+![MCMCTree with the extended calibration set and uncorrelated rates vs. the manuscript tree](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Chunks/sortadate-ext-uncorr_vs_manuscript.png)
+
+### Autocorrelation
+
+Again, the settings were identical to the original analysis except that the `clock` variable was set to 3 (autocorrelated rates) rather than 2 (independent rates) in the configuration file. The analysis reached the target number of samples after 594:27:56, with the posterior distribution was automatically summarized into the following tree:
+
+![MCMCTree with aucorrelated rates vs. the manuscript tree](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Chunks/sortadate-autocorr_vs_manuscript.png)
+
+### Extended calibration set with autocorrelation
+
+This set-up was a combination of the two previous analyses, with the 28-calibration set and the autocorrelated lognormal relaxed clock model. After 603:04:28, the MCMC sampler collected the specified number of trees, which were then summarized as follows:
+
+![MCMCTree with the extended calibration set and autocorrelated rates vs. the manuscript tree](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Chunks/sortadate-ext-autocorr_vs_manuscript.png)
+
+## Test for autocorrelation in PhyloBayes
 
 Rationale: in order to perform Bayes factor model comparisons in PhyloBayes, it is necessary to first run the estbranches program from the Multidistribute package to calculate a variance-covariance matrix for branch lengths. As its input, estbranches requires a substitution model with fixed-value parameters (i.e., the parameters of the model are not estimated simultaneously with the branch lengths). A properly formatted model file can be generated from baseml output using one of the scripts in the package.
 
@@ -2371,17 +2495,172 @@ Note that the `.oes` file used for model comparison has the following components
 3. list of parent-child triplets (with tips represented by their numbers)
 4. variance-covariance matrix
 
-According to the manual, the variance-covariance matrix can be obtained using Thorne et al.'s `estbranches`. The PAML manual states that MCMCTree under the `usedata = 3` setting performs the same function. Will the PAML-generated matrix be readable by PhyloBayes?
+According to the manual, the variance-covariance matrix can be obtained using the `estbranches` program from the `multidistribute` package. The PAML manual states that MCMCTree under the `usedata = 3` setting performs the same function. Since PhyloBayes does not support partitioning, a new PAML analysis was run on an unpartitioned version of the dataset but with otherwise identical settings. However, the PAML-generated matrix was not readable by PhyloBayes, and `estbranches` was used to calculate the matrix. The tests were run as follows:
 
-(Since PhyloBayes does not support partitioning, a new PAML analysis was run on an unpartitioned version of the dataset but with otherwise identical settings.)
-
+```
 ../bf -cov chunkbrlen.oes -long -ln chunklnbf
 ../bf -cov chunkbrlen.oes -long -ugam chunkugambf
+```
 
 Uncorrelated gamma vs unconstrained: logBF = 36.6282 [36.4131 : 41.7097]
 Autocorrelated lognormal vs. unconstrained: logBF = 77.3395 [59.7214 : 78.3891]
 
+## Tip dating in BEAST2
+
+BEAST2 was installed on the 'yog-sothoth' cluster, with the Sampled Ancestors package added via command line:
+
+```
+java -cp beast.jar beast.util.AddOnManager -add SA
+```
+
+The substitution models used for the individual partitions were the same for the tip-dating analyses as for the node-dating analyses above, following the optimum scheme recovered by PartitionFinder. However, different priors were placed on their parameters following the recommendations of Heath (2016). The only free transition rate parameter (`rateAG`) was assigned a beta prior with $\alpha = 2$ and $\beta = 0.5$; all transversion parameters were assigned a beta prior with $\alpha$ set to 2 and $\beta$ to 0.25. The choice of the rate model (uncorrelated lognormal clock) as well as the hyperpriors placed on its parameters were the same as in the initial node-dating analysis.
+
+The fossilized birth-death (FBD) tree prior was condition on the age of the root, following the assumption that all fossils included in the analysis are descendants of the most recent common ancestor of all living acanthomorphs. As recommended by Heath (2016), an exponential hyperprior with a mean of 1 was used for the diversification rate. The sampling proportion was assigned a beta hyperprior with $\alpha = \beta =$ 2, and the default hyperprior was placed on the turnover hyperparameter. The proportion of sampled extant species was fixed to 0.01, since the 118 species represented in the matrix by their sequence data represent ~1% of the total diversity of extant acanthomorphs.
+
+13 taxon sets were created using BEAUti 2.4.6. Twelve of these corresponded to the internal calibrations used in the node-dating analyses, and their monophyly was enforced without providing any prior distribution. Each fossil was treated as a member of the same crown clade to whose MRCA it was assigned in the node-dating analyses. To ensure that our monophyly constraints were not mutually contradictory, we enforced the membership of some fossils in multiple taxon sets when the latter were nested within one another. As an example, *Mcconichthys* was constrained to be a member not only of the clade originating with the most recent common ancestor of *Percopsis omiscomaycus* and *Aphredoderus sayanus*, but also of the more inclusive clade originating with the MRCA of *Percopsis omiscomaycus* and *Polymixia lowei*. One more taxon set was created for all tips included in the analysis (including fossils) and assigned a uniform prior with support on (98 Ma, 143 Ma). 
+
+We used a random starting tree, whose root height was set to a deliberately low and arbitrary value of 0.1 after several failed attempts to initialize the analysis with a higher tree. The MCMC chain was run for 500 million generations, with a sampling period of 25,000 generations:
+
+```
+java -jar lib/beast.jar -beagle_SSE -threads 16 12-fossil-tip-dating-random-start.xml
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F, eval = FALSE}
+# Operator analysis results:
+cat(readLines("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/12-fossil-tip-dating-operators.txt"), sep = '\n')
+```
+
+The effective samples sizes of each parameter were determined using LogAnalyser:
+
+```
+/home/linuxbrew/.linuxbrew/bin/loganalyser -burnin 50000000 -ess 12-fossil-tip-dating.log
+```
+
+Since all the ESS values exceeded 200 samples, the posterior distribution of topologies and divergence times was summarized using TreeAnnotator: 
+
+```
+/home/linuxbrew/.linuxbrew/bin/treeannotator -burnin 50000000 -heights median beast_tree.trees 12-fossil-tip-dating.tre
+```
+
+![BEAST2 tip dating tree based on 12 calibrations](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/12-fossil-tip-dating.png)
+
+Similarly, an extended analysis with exactly the same setting and 16 additional taxon sets was started as follows:
+
+```
+java -jar lib/beast.jar -beagle_SSE -threads 16 28-fossil-tip-dating-random-start.xml
+```
+
+```{r comment='', echo = FALSE, message=F, warning=F, eval = FALSE}
+# Operator analysis results:
+cat(readLines("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/28-fossil-tip-dating-operators.txt"), sep = '\n')
+```
+
+After the 28-fossil analysis finished up, LogAnalyser was used to calculate the effective sample sizes of individual parameters.
+
+```
+/home/linuxbrew/.linuxbrew/bin/loganalyser -burnin 50000000 -ess 28-fossil-tip-dating.log
+```
+
+Since all of these were substantially greater than 200 samples, TreeAnnotator was utilized to find the maximum clade credibility tree:
+
+```
+/home/linuxbrew/.linuxbrew/bin/treeannotator -burnin 50000000 -heights median tree.trees 28-fossil-tip-dating.tre
+```
+
+![BEAST2 tip dating tree based on 28 calibrations](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/28-fossil-tip-dating.png)
+
+### Uniform root prior
+
+In the analyses above, the root age was only constrained by the FBD branching prior, which led to an unrealistically old posterior distribution. Therefore, two new analyses were started for the 12-fossil and 28-fossil datasets: in both cases, the settings were identical to the unconstrained analyses, except that a uniform prior from 98 to 143 Ma was placed on the age of the root. The 12-fossil analysis finished up first, with the following ESS values determined using LogAnalyser:
+
+```{r comment='', echo = FALSE, message=F, warning=F, eval = FALSE}
+# Operator analysis results:
+cat(readLines("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/12-fossil-tip-dating-unif-root-prior-operators.txt"), sep = '\n')
+```
+
+```{r, echo=FALSE}
+options(scipen=999)
+tipdating12urp <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/12-fossil-tip-dating-unif-root-prior-LogAnalyser-output.txt", header=TRUE)
+tipdating12urp[,c(1,4,7)]
+```
+
+Since all parameters had effective sample sizes of 200 or greater, the posterior was summarized using TreeAnnotator:
+
+```
+/home/linuxbrew/.linuxbrew/bin/treeannotator -burnin 50000000 -heights median 12-fossil-tip-dating-unif-root-prior.trees 12-fossil-tip-dating-unif-root-prior.tre
+```
+
+![BEAST2 tip dating tree based on 12 calibrations and a uniform root prior](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/12-fossil-tip-dating-unif-root-prior.png)
+
+After the 28-fossil analysis reached the target length of 500 million generations, LogAnalyser was used to compute the following ESS values:
+
+```{r comment='', echo = FALSE, message=F, warning=F, eval = FALSE}
+# Operator analysis results:
+cat(readLines("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/28-fossil-tip-dating-unif-root-prior-operators.txt"), sep = '\n')
+```
+
+```{r, echo=FALSE}
+options(scipen=999)
+tipdating12urp <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/28-fossil-tip-dating-unif-root-prior-LogAnalyser-output.txt", header=TRUE)
+tipdating12urp[,c(1,4,7)]
+```
+
+As the effective sample sizes of all parameters exceeded 200, the posterior distribution of time trees was summarized using TreeAnnotator:
+
+```
+/home/linuxbrew/.linuxbrew/bin/treeannotator -burnin 50000000 -heights median 28-fossil-tip-dating-unif-root-prior.trees 28-fossil-tip-dating-unif-root-prior.tre
+```
+
+![BEAST2 tip dating tree based on 12 calibrations and a uniform root prior](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/28-fossil-tip-dating-unif-root-prior.png)
+
+## Comparisons of the posterior and the prior
+
+These were performed for the uncorrelated lognormal node-dating BEAST analysis as well as for both the 12-fossil and 28-fossil tip-dating analyses. In the former case, 50,000 samples from the prior were obtained by running MCMC for 50 million generations with a sampling period of 1,000 generations; for the tip-dating analyses, 20,000 samples were used (500 million generations; 1 sample collected every 25,000 generations). The samples were obtained by re-running the original analysis with the corresponding option in BEAUti ("Sample from prior only -- create empty alignment" in BEAUti 1.8 and "Sample From Prior" in BEAUti 2.4) using the following commands:
+
+```
+/home/linuxbrew/.linuxbrew/bin/beast -beagle_SSE -beagle_scaling dynamic BEAST-uncorr-lognorm-12-calib-prior.xml
+java -jar lib/beast.jar -beagle_SSE -threads 8 12-tipdating-prior.xml
+java -jar lib/beast.jar -beagle_SSE -threads 8 28-tipdating-prior.xml
+```
+
+All likelihood values were recorded as "NaN" in the tip-dating prior runs. Accordingly, the posterior corresponded exactly to the prior:
+
+```{r, echo=FALSE}
+tipdating12prior <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/12-tipdating-prior.log", header = TRUE, stringsAsFactors = FALSE)
+paste("Prior mean of the 12-fossil tip-dating prior sample:", mean(tipdating12prior[,4]), sep = " ")
+paste("Posterior mean of the 12-fossil tip-dating prior sample:", mean(tipdating12prior[,2]), sep = " ")
+tipdating28prior <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/28-tipdating-prior.log", header = TRUE, stringsAsFactors = FALSE)
+paste("Prior mean of the 28-fossil tip-dating prior sample:", mean(tipdating28prior[,4]), sep = " ")
+paste("Posterior mean of the 28-fossil tip-dating prior sample:", mean(tipdating28prior[,2]), sep = " ")
+```
+
+However, this was not the case for the UCLD node-dating analysis. An examination of the log file in Tracer revealed that the likelihood had oscillated about 0 for approximately 6 million generations (taking on both negative and positive values) before suddenly jumping up ~15,000 log units to a high *positive* value. Another such jump had occurred at ~38 million generations. The mean log posterior (by definition the normalized product of the prior and the likelihood) was therefore positive as well, rather than equal to the (negative) prior:
+
+```{r, echo=FALSE}
+ucldnodedatingprior <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/BEAST-uncorr-lognorm-12-calib-prior.log", header = TRUE, stringsAsFactors = FALSE)
+paste("Prior mean of the UCLD node-dating prior sample:", mean(ucldnodedatingprior[,3]), sep = " ")
+paste("Posterior mean of the UCLD node-dating prior sample:", mean(ucldnodedatingprior[,2]), sep = " ")
+```
+
+However, since the corresponding XML file was checked and found to contain no data, this occurrence of non-zero and even positive likelihood values was treated as a peculiarity of the way BEAST 1.8 reports individual MCMC states that does not affect the validity of the analysis.
+
+No burnin was specified when summarizing the distributions of the samples, since the chain started from the target distribution (i.e., the prior) instead of having to converge to it. This is supported by the trace observed in Tracer for both of the tip-dating analyses; however, in the node-dating analyses, the prior plummets from ~-1350 to ~-2250 log units at the same point when the likelihood rises from the proximity of 0, and oscillates about the latter value until the end of the chain. A pronounced second drop is observed at the 38-million generation mark (where the likelihood increases for a second time), but is rapidly followed by a return to the original value.
+
+The plots below compare (1) the marginal ("induced") prior (i.e., the FBD process conditioned on the age of the root and the monophyly constraints) and (2) the posterior for the tip-dating analyses and (1) the user-specified calibration densities, (2) the marginal ("induced") prior obtained by multiplying these densities by the birth-death tree prior, and (3) the posterior for the node-dating analysis.
+
+![UCLD node-dating BEAST analysis: comparison of the user-specified (blue) and induced (green) prior](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/BEAST-UCLD-12-calib_user-vs-induced-prior.png)
+
+![UCLD node-dating BEAST analysis: comparison of the user-specified priors (blue) and the posterior (red)](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/BEAST-UCLD-12-calib_user-prior-vs-posterior.png)
+
+![UCLD node-dating BEAST analysis: comparison of the induced prior (green) and the posterior (red)](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/BEAST-UCLD-12-calib_induced-prior-vs-posterior.png)
+
+![BEAST2 12-fossil tip-dating analysis: comparison of the induced prior (blue) and the posterior (red)](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/12-fossil-tip-dating_prior-vs-posterior.png)
+
+![BEAST2 28-fossil tip-dating analysis: comparison of the induced prior (blue) and the posterior (red)](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/Tip_dating/28-fossil-tip-dating_prior-vs-posterior.png)
+
 # Refs:
+
+Heath T 2016 Divergence time estimation using BEAST v2.: dating species divergences with the fossilized birth-death process. http://phyloworks.org/workshops/DivTime_BEAST2_tutorial_FBD.pdf (Accessed June 12, 2017)
 
 Lepage T, Bryant D, Philippe H, Lartillot N 2007 A general comparison of relaxed molecular clock models. Mol Biol Evol 24(12): 2669--80
 
