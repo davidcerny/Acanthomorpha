@@ -2474,6 +2474,125 @@ This set-up was a combination of the two previous analyses, with the 28-calibrat
 
 ![MCMCTree with the extended calibration set and autocorrelated rates vs. the manuscript tree](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Chunks/sortadate-ext-autocorr_vs_manuscript.png)
 
+## PhyloBayes analysis
+
+First, the hyperparameters of the birth-death process were estimated by running PhyloBayes under a topological constraint (without branch lengths or calibrations). PhyloBayes cannot assign different substitution models to different partitions, nor can it (unlike MCMCTree) unlink model parameters across partitions. However, the following options are available:
+
+- `-gbl` flag: give a separate set of branch lengths to each user-specified partition
+- `-dp`/`-cat` model: infinite mixture of equilibrium frequency profiles
+- `-qmm` model: infinite mixture of Q-matrices (i.e., of both equilibrium frequencies and exchangeabilities)
+
+Since a node-dating analysis estimates rates and times separately instead of branch lengths, and since the `-cat` and `-qmm` options are very time-intensive and their use can lead to converge problems, the SortaDate alignment was analyzed as a single unpartitioned dataset. As there were no partitions with separate models, the risk of overparameterization was eliminated, and the full dataset (length = 3297 bp) was therefore analyzed instead of the one used for BEAST and PAML, which excluded the two shortest partitions identified by PartitionFinder (length = 3197 bp). The chain length was set to 25,000 generations, which was expected to be sufficient for reaching convergence based on the results of previous analyses.
+
+```
+../pb -d concat.phy -T 12_no_outgroups_scheme_3.tre -ln -bd -gtr -dgam 4 -x 1 25000 sortadate-nocal
+```
+
+The chain finished up with the following autocorrelation times and effective sample sizes:
+
+```{r}
+pbNocal <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/PhyloBayes/nocal-tracer-info.txt", header = FALSE, sep = "\t")
+pbNocalTrace <- read.csv("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/PhyloBayes/sortadate-nocal.trace", sep = "\t")
+colnames(pbNocal)[2:16] <- colnames(pbNocalTrace)[-c(1:3)]
+t(pbNocal[c(10,11),])
+```
+
+Based on these values, the chain was summarized using `readdiv` under the following settings:
+
+```
+../readdiv -x 2500 20 sortadate-nocal
+```
+
+Birth-death prior hyperparameters:
+
+p1                        | p2 
+--------------------------|---------------------------
+0.00132097 +/- 0.00115672 | 0.000782745 +/- 0.00034246
+
+These values were used to perform the calibrated analyses (under both the 12-calibration and 28-calibration datasets). Again, the values supplied to the `-x` flag were chosen based on the previous analyses of comparably large datasets:
+
+```
+../pb -d concat.phy -T 12_no_outgroups_scheme_3.tre -ln -bd 0.00132097 0.000782745 -cal calib_root_corrected -sb -gtr -dgam 4 -x 1 20000 sortadate-12cal
+../pb -d concat.phy -T 12_no_outgroups_scheme_3.tre -ln -bd 0.00132097 0.000782745 -cal extendcorrectcalib -sb -gtr -dgam 4 -x 1 20000 sortadate-28cal
+```
+
+The analyses finished up with the following ESS values and autocorrelation periods:
+
+```{r}
+pb12cal <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/PhyloBayes/12cal-tracer-info.txt", header = FALSE, sep = "\t")
+pb12calTrace <- read.csv("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/PhyloBayes/sortadate-12cal.trace", sep = "\t")
+colnames(pb12cal)[2:17] <- colnames(pb12calTrace)[-c(1:3)]
+t(pb12cal[c(10,11),])
+
+pb28cal <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/PhyloBayes/28cal-tracer-info.txt", header = FALSE, sep = "\t")
+pb28calTrace <- read.csv("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/PhyloBayes/sortadate-28cal.trace", sep = "\t")
+colnames(pb28cal)[2:17] <- colnames(pb28calTrace)[-c(1:3)]
+t(pb28cal[c(10,11),])
+```
+
+The chains were summarized as follows:
+
+```
+../readdiv -x 2000 20 sortadate-12cal
+../readdiv -x 2000 20 sortadate-28cal
+```
+
+12-calibration set overflows (italics) and underflows (bold):
+
+Calibration       | Lower bound | Upper bound | Node number | Mean
+------------------|-------------|-------------|-------------|------------
+Root              | 98          | 143         | 118         | 138.664
+*Aipichthys*      | 98          | 128.82      | 119         | 126.112
+*Berybolcensis*   | 49          | 109.29      | 132         | 79.9844
+*Calatomus*       | 11.9        | 43.95       | 210         | 28.5936
+Chaetodontidae    | 29.62       | 59.26       | 220         | 57.8165
+*Eastmanalepes*   | 49          | 61.61       | 195         | 54.998
+*Eobuglossus*     | 41.2        | 53.88       | 189         | 45.4263
+*Eocoelopoma*     | 54.17       | 95.58       | 162         | 69.313
+*Homonotichthys*  | 93.9        | 116.35      | 123         | 115.312
+*Mcconichthys*    | 63.1        | 93.51       | 124         | **57.9158**
+*Mene*            | 55.2        | 95.64       | 192         | 71.7266
+*Rhamphexocoetus* | 49          | 80.52       | 173         | 74.3516
+*Tarkus*          | 49          | 53.93       | 229         | 50.5079
+
+Calibration         | Lower bound | Upper bound | Node number | rcluster1ext 
+--------------------|-------------|-------------|-------------|--------------
+Root                | 98.0        | 143.0       | 118         | 132.175	
+*Aipichthys*        | 98.0        | 143.0       | 119	        | 126.049
+*Archaeotetraodon*  | 32.02       | 58.5        | 231         | 32.2761
+*Archaeus*          | 54.17       | 80.8        | 193	        | 62.01
+*Berybolcensis*     | 49.0        | 93.7        | 132	        | 62.4285
+*Calatomus*         | 11.9        | 63.3        | 210	        | 30.9777
+Chaetodontidae      | 29.62       | 66.0        | 220         | 65.7377
+*Cretzeus*          | 69.71       | 111.3       | 125	        | 106.648
+*Eastmanalepes*     | 49.0        | 69.3        | 195	        | 57.4984
+*Eobothus*          | 49.0        | 79.7        | 186	        | 69.6748
+*Eobuglossus*       | 41.2        | 66.6        | 189	        | 47.3793
+*Eocoelopoma*       | 54.17       | 94.2        | 162	        | 66.8977
+*Gasterorhamphosus* | 69.71       | 111.3       | 154	        | 84.51
+*Homonotichthys*    | 93.9        | 116.35      | 123	        | 115.207
+*Hoplopteryx*       | 93.9        | 128.0       | 129         | 125.03	
+*Luvarus*           | 54.17       | 80.8        | 219	        | 78.8816
+*Mahengechromis*    | 45.46       | 67.4        | 174         | 60.6318
+*Massamorichthys*   | 58.551      | 109.6       | 124	        | **48.5732**
+*Mene*              | 55.2        | 94.6        | 192	        | 71.5182
+*Proacanthurus*     | 49.0        | 69.3        | 222	        | 52.0353
+*Prosolenostomus*   | 49.0        | 93.7        | 155	        | 78.3679
+*Rhamphexocoetus*   | 49.0        | 79.7        | 173	        | 73.5149
+*Rhinocephalus*     | 53.7        | 94.4        | 128         | 54.059
+*Sphyraena*         | 49.0        | 79.7        | 183         | 78.0494
+*Tarkus*            | 49.0        | 61.6        | 229	        | 50.4162	
+*Trachipterus*      | 5.33        | 94.0        | 121         | 25.6576
+*Triodon*           | 50.5        | 69.6        | 230	        | 64.0869
+*Turkmene*          | 54.17       | 122.5       | 120	        | 57.4098
+*Zenopsis*          | 32.02       | 91.4        | 126         | 39.0751
+
+More detailed information on underflows and overflows is available in the respective `_sample.calib` files.
+
+![Comparisons of the PhyloBayes, MCMCTree, and BEAST analyses of the SortaDate alignment under the 12-calibration set with the manuscript tree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/PhyloBayes/12cal-comparison.png)
+
+![Comparisons of the PhyloBayes, MCMCTree, and BEAST analyses of the SortaDate alignment under the 28-calibration set with the manuscript tree](/Users/David/Grive/Alfaro_Lab/Acanthomorpha/sate-gblocks-clean-min-90-taxa/Concat/PhyloBayes/28cal-comparison.png)
+
 ## Test for autocorrelation in PhyloBayes
 
 Rationale: in order to perform Bayes factor model comparisons in PhyloBayes, it is necessary to first run the estbranches program from the Multidistribute package to calculate a variance-covariance matrix for branch lengths. As its input, estbranches requires a substitution model with fixed-value parameters (i.e., the parameters of the model are not estimated simultaneously with the branch lengths). A properly formatted model file can be generated from baseml output using one of the scripts in the package.
@@ -2502,8 +2621,8 @@ According to the manual, the variance-covariance matrix can be obtained using th
 ../bf -cov chunkbrlen.oes -long -ugam chunkugambf
 ```
 
-Uncorrelated gamma vs unconstrained: logBF = 36.6282 [36.4131 : 41.7097]
-Autocorrelated lognormal vs. unconstrained: logBF = 77.3395 [59.7214 : 78.3891]
+- Uncorrelated gamma vs unconstrained: logBF = 36.6282 [36.4131, 41.7097]
+- Autocorrelated lognormal vs. unconstrained: logBF = 77.3395 [59.7214, 78.3891]
 
 ## Tip dating in BEAST2
 
