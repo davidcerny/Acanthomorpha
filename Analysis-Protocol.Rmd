@@ -2555,6 +2555,67 @@ Identical to the previous analysis except for the clock value, which was changed
 ![4-partition dataset, PAML, autocorrelated rates: 12 vs. 28 calibrations](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Four_partitions/4-part-autocorr-12-vs-28.png)
 ![4-partition dataset, PAML: four-way comparison](/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Four_partitions/four-way_comparison.png)
 
+## Tip dating
+
+All applicable settings were identical to those used to analyze the SortaDate dataset. A single substitution model (GTR+$\Gamma_4$) was assigned to the entire alignment. Three tip-dating analyses were run simultaneously: without a root prior, with a hard-bounded uniform prior from 98 Ma to 143 Ma, and with a soft-bounded exponential prior (offset = 98 Ma, 95th percentile = 143 Ma):
+
+```
+java -jar lib/beast.jar -beagle_SSE -threads 8 4_part_sate-gblocks.xml
+java -jar lib/beast.jar -beagle_SSE -threads 8 4_part_sate-gblocks_unif_root_prior.xml
+java -jar lib/beast.jar -beagle_SSE -threads 8 4_part_sate-gblocks_exp_root_prior.xml
+```
+
+None of the three chains reached convergence after 500 million generations:
+
+No root prior:
+
+```{r, echo=FALSE}
+options(scipen=999)
+tracer4parttip <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Four_partitions/4_part_sate-gblocks_Tracer-output.txt", header=TRUE)
+tracer4parttip <- t(tracer4parttip)
+tracer4parttip[,10]
+```
+
+Uniform root prior:
+
+```{r, echo=FALSE}
+options(scipen=999)
+tracer4parttipunif <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Four_partitions/4_part_sate-gblocks_unif_root_prior_Tracer-output.txt", header=TRUE)
+tracer4parttipunif <- t(tracer4parttipunif)
+tracer4parttipunif[,10]
+```
+
+Exponential root prior:
+
+```{r, echo=FALSE}
+options(scipen=999)
+tracer4parttipexp <- read.table("/Users/David/Grive/Alfaro_Lab/Acanthomorpha/Four_partitions/4_part_sate-gblocks_exp_root_prior_Tracer-output.txt", header=TRUE)
+tracer4parttipexp <- t(tracer4parttipexp)
+tracer4parttipexp[,10]
+```
+
+## "Emergency runs"
+
+Additional PAML runs were started under a new set of calibration bounds derived from the inclusion of *Plectocretacicus* in the outgroup sequence used to determine upper bounds. The following tree was used:
+
+```{r comment='', echo = FALSE, message=F, warning=F}
+cat(readLines("/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/12_plecto_cali_no_outgroups.tre"), sep = '\n')
+```
+
+Multiple runs were set up so that they could be combined, with the resulting combined run yielding the same number of samples as would be achieved by a single run of greater length. Except for the tree file and MCMC settings, the control file used to initiate the analyses was identical to that used for the original 4-partition MCMCTree analyses (which the manuscript tree was based on). The original strategy was to run 10 replicates with a burnin of 2,500 samples and 2,000 post-burnin samples (as opposed to the 5,000 burnin and 10,000 post-burnin samples of the original analyses). However, even in the resulting combined run, ESS values did not reach the threshold of 200 for all parameters, and the shape of the traces suggested that the chain continued climbing after samples started to be collected, implying that the specified burnin period was too short.
+
+Therefore, a new set of analyses was started, with 5 replicates of 5,000 burnin samples and 5,000 post-burnin samples each. The resulting traces plateaued at different log likelihoods, suggesting that they were exploring different regions of the parameter space. After discarding suboptimal runs, the traces suggested that the burnin period was still too short for at least some of the parameters. This was corrected *a posteriori* by discarding some of the samples. However, even after these measures were implemented, effective sample sizes did not exceed 200 for all parameters. To collect more samples, 10 more replicates were started under the same MCMC settings.
+
+The combination of 5,000-sample runs 1, 5, 7, and 15, with 2,000 extra samples (corresponding to 500,000 generations) removed from each, finally yielded ESS values that were equal to or greater than 200 for all parameters:
+
+```{r, message=F, warning=F}
+options(scipen=999)
+emerg <- read.table("/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/Four_partitions/Plecto_runs/plecto-runs-1-5-7-and-15-ess.txt", header=TRUE)
+emerg <- t(emerg)
+miness <- min(na.omit(as.numeric(emerg[,10])))
+paste("Minimum ESS value in the combined log file =", miness)
+```
+
 # Tree Comparisons 
 
 ## Comparisons Across Platforms
