@@ -2604,7 +2604,20 @@ cat(readLines("/Users/David/Grive/Alfaro_Lab/PAML_mcmcTREE/12_plecto_cali_no_out
 
 Multiple runs were set up so that they could be combined, with the resulting combined run yielding the same number of samples as would be achieved by a single run of greater length. Except for the tree file and MCMC settings, the control file used to initiate the analyses was identical to that used for the original 4-partition MCMCTree analyses (which the manuscript tree was based on). The original strategy was to run 10 replicates with a burnin of 2,500 samples and 2,000 post-burnin samples (as opposed to the 5,000 burnin and 10,000 post-burnin samples of the original analyses). However, even in the resulting combined run, ESS values did not reach the threshold of 200 for all parameters, and the shape of the traces suggested that the chain continued climbing after samples started to be collected, implying that the specified burnin period was too short.
 
-Therefore, a new set of analyses was started, with 5 replicates of 5,000 burnin samples and 5,000 post-burnin samples each. The resulting traces plateaued at different log likelihoods, suggesting that they were exploring different regions of the parameter space. After discarding suboptimal runs, the traces suggested that the burnin period was still too short for at least some of the parameters. This was corrected *a posteriori* by discarding some of the samples. However, even after these measures were implemented, effective sample sizes did not exceed 200 for all parameters. To collect more samples, 10 more replicates were started under the same MCMC settings.
+Therefore, a new set of analyses was started, with 5 replicates of 5,000 burnin samples and 5,000 post-burnin samples each. The resulting traces plateaued at different log likelihoods, suggesting that they were exploring different regions of the parameter space. After discarding suboptimal runs, the traces suggested that the burnin period was still too short for at least some of the parameters. This was corrected *a posteriori* by discarding some of the samples. However, even after these measures were implemented, effective sample sizes did not exceed 200 for all parameters. To collect more samples, 10 more replicates were started under the same MCMC settings:
+
+Chain                 | Run time
+----------------------|---------------------------
+4part-plecto-longer6  | 28:56:28
+4part-plecto-longer7  | 28:30:36
+4part-plecto-longer8  | 29:23:30
+4part-plecto-longer9  | 29:14:05
+4part-plecto-longer10 | 28:45:35
+4part-plecto-longer11 | 29:36:07
+4part-plecto-longer12 | 28:58:57
+4part-plecto-longer13 | 29:31:56
+4part-plecto-longer14 | 29:14:19
+4part-plecto-longer15 | 29:14:54
 
 The combination of 5,000-sample runs 1, 5, 7, and 15, with 2,000 extra samples (corresponding to 500,000 generations) removed from each, finally yielded ESS values that were equal to or greater than 200 for all parameters:
 
